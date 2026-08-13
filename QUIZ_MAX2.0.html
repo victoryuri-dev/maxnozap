@@ -1,425 +1,936 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz — Max no Zap (protótipo)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Epilogue:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --azul:#0e33eb;--azul-esc:#081b80;--verde:#c6ff3d;--gelo:#f4f4f4;--preto:#0d0d0d;--cinza:#8a8fa3;
-    --display:'Epilogue',sans-serif;--display-hero:'Boldonse',sans-serif;--corpo:'Epilogue',sans-serif;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  html,body{height:100%;}
-  body{font-family:var(--corpo);background:var(--gelo);}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz — Max no Zap (protótipo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Boldonse&family=Epilogue:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    @keyframes hero-surgir {
+      0%{
+        transform: translateY(60%) translateX(-50%);
+      }
+      100%{
+        transform: translateY(0) translateX(-50%);
+      }
+    }
 
-  /* .phone = casca de fundo, ocupa a viewport inteira; o conteúdo (texto,
+    @keyframes surgir {
+      0%{
+        transform: translateY(100%);
+      }
+      100%{
+        transform: translateY(0);
+      }
+    }
+
+    :root {
+      --azul: #0e33eb;
+      --azul-esc: #081b80;
+      --verde: #c6ff3d;
+      --gelo: #f4f4f4;
+      --preto: #0d0d0d;
+      --cinza: #8a8fa3;
+      --display: 'Epilogue', sans-serif;
+      --display-hero: 'Boldonse', sans-serif;
+      --corpo: 'Epilogue', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--corpo);
+      background: var(--gelo);
+    }
+
+    /* .phone = casca de fundo, ocupa a viewport inteira; o conteúdo (texto,
      formulário, botões) fica sempre restrito ao tamanho de celular via .content-col */
-  .phone{width:100%;height:100vh;height:100dvh;background:var(--gelo);position:relative;display:flex;flex-direction:column;}
-  .content-col{max-width:420px;margin:0 auto;padding:28px 24px 32px;}
+    .phone {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      background: var(--gelo);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
 
-  /* progresso */
-  .progress{max-width:420px;width:100%;margin:0 auto;height:6px;background:#dde1f0;flex:none;}
-  .progress .bar{height:100%;background:var(--azul);width:0%;transition:width .5s cubic-bezier(.2,.7,.2,1);border-radius:0 4px 4px 0;}
+    .content-col {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 28px 24px 32px;
+    }
 
-  .screen-stack{position:relative;flex:1;overflow:hidden;}
-  .screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:0;display:none;animation:fade .45s ease;}
-  .screen.active{display:block;}
-  @keyframes fade{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
-  /* telas 0-7 usam transições próprias via JS (push/stagger), sem o fade padrão */
-  .screen[data-step="0"],.screen[data-step="1"],.screen[data-step="2"],.screen[data-step="3"],
-  .screen[data-step="4"],.screen[data-step="5"],.screen[data-step="6"],.screen[data-step="7"]{animation:none;}
+    /* progresso */
+    .progress {
+      max-width: 420px;
+      width: 100%;
+      margin: 0 auto;
+      height: 6px;
+      background: #dde1f0;
+      flex: none;
+    }
 
-  .brand{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:1px;color:var(--azul);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
-  .brand .brand-logo{height:24px;width:auto;display:block;}
+    .progress .bar {
+      height: 100%;
+      background: var(--azul);
+      width: 0%;
+      transition: width .5s cubic-bezier(.2, .7, .2, 1);
+      border-radius: 0 4px 4px 0;
+    }
 
-  .step-tag{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--cinza);margin-bottom:14px;}
-  h2{font-family:var(--display);font-size:24px;font-weight:800;letter-spacing:-.6px;line-height:1.2;margin-bottom:24px;color:var(--preto);}
-  .sub{font-size:14.5px;color:#55555f;line-height:1.55;margin-bottom:18px;}
-  .sub .hl{color:var(--azul);font-weight:700;}
+    .screen-stack {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
 
-  /* tela 0 — hero azul full-bleed com a folha branca sobrepondo por cima */
-  .screen[data-step="0"]{padding:0;overflow:hidden;}
+    .screen {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0;
+      display: none;
+      animation: fade .45s ease;
+    }
 
-  /* hero da tela 0 */
-  .hero-wrap{position:absolute;inset:0;overflow:hidden;background:var(--azul);z-index:1;}
-  .hero-swoosh{position:absolute;width:260%;max-width:none;left:46%;top:30%;transform:translate(-50%,-50%) rotate(4deg);z-index:1;filter:brightness(.74);}
-  .hero-img{position:absolute;left:50%;top:22px;height:540px;transform:translateX(-50%);z-index:2;}
+    .screen.active {
+      display: block;
+    }
 
-  .s0-sheet{position:absolute;left:0;right:0;top:42%;bottom:0;z-index:3;background:var(--gelo);border-radius:30px 30px 0 0;overflow-y:auto;}
-  .s0-sheet .content-col{padding:34px 26px 30px;}
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
 
-  h2.hero-title{font-family:var(--display-hero);font-weight:400;font-size:30px;line-height:1.1;letter-spacing:0;margin:0 0 18px;text-transform:uppercase;}
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
 
-  /* botões estilo "shadow box": container (.opt/.btn) só ancora a sombra;
+    /* telas 0-7 usam transições próprias via JS (push/stagger), sem o fade padrão */
+    .screen[data-step="0"],
+    .screen[data-step="1"],
+    .screen[data-step="2"],
+    .screen[data-step="3"],
+    .screen[data-step="4"],
+    .screen[data-step="5"],
+    .screen[data-step="6"],
+    .screen[data-step="7"] {
+      animation: none;
+    }
+
+    .brand {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--azul);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand .brand-logo {
+      height: 24px;
+      width: auto;
+      display: block;
+    }
+
+    .step-tag {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--cinza);
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -.6px;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      color: var(--preto);
+    }
+
+    .sub {
+      font-size: 16px;
+      color: #55555f;
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+
+    .sub .hl {
+      color: var(--azul);
+      font-weight: 700;
+    }
+
+    /* tela 0 — hero azul full-bleed com a folha branca sobrepondo por cima */
+    .screen[data-step="0"] {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* hero da tela 0 */
+    .hero-wrap {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--azul);
+      z-index: 1;
+    }
+
+    .hero-swoosh {
+      position: absolute;
+      width: 420vw;
+      max-width: none;
+      left: 46%;
+      top: 30%;
+      transform: translate(-50%, -50%) rotate(4deg);
+      z-index: 1;
+      filter: brightness(.90);
+    }
+
+    .hero-img {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 95%;
+      min-width: 325px;
+      transform: translateX(-50%);
+      z-index: 2;
+      animation: hero-surgir .8s cubic-bezier(0.68, -0.4, 0.32, 1.2);
+    }
+
+    .s0-sheet {
+      position: absolute;
+      margin: auto;
+      width: 100%;
+      left: 0;
+      right: 0;
+      min-height: fit-content;
+      height: 55%;
+      bottom: 0;
+      padding: 30px 0px 0;
+      z-index: 3;
+      background: var(--gelo);
+      border-radius: 30px 30px 0 0;
+      overflow-y: auto;
+      animation: .6s ease-in-out surgir;
+      overflow-y: hidden;
+    }
+
+    .s0-sheet .content-col{
+      animation: .8s ease-in-out surgir;
+    }
+
+    .s0-sheet .content-col h2{
+      animation: .9s ease-in-out surgir;
+    }
+    .s0-sheet .content-col p:nth-of-type(1){
+      animation: 1s ease-in-out surgir;
+    }
+    .s0-sheet .content-col p:nth-of-type(2){
+      animation: 1.3s ease-in-out surgir;
+    }
+    .s0-sheet .content-col p:nth-of-type(3){
+      animation: 1.4s ease-in-out surgir;
+    }
+    .s0-sheet .content-col .btn{
+      animation: 1.5s ease-in-out surgir;
+    }
+
+    @media screen and (min-width: 420px) {
+      .s0-sheet{
+        width: fit-content;
+        padding: 30px 30px 0;
+      }
+
+      .hero-img{
+        max-width: 420px;
+      }
+
+      .hero-swoosh{
+        width: 150vw;
+        
+      }
+    }
+
+    .s0-sheet .content-col {
+      padding: 34px 26px 30px;
+    }
+
+    h2.hero-title {
+      font-family: var(--display-hero);
+      font-weight: 400;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: 0;
+      margin: 0 0 30px;
+      text-transform: uppercase;
+    }
+
+    /* botões estilo "shadow box": container (.opt/.btn) só ancora a sombra;
      quem tem o fundo/borda e se desloca no hover é o .face interno —
      assim a sombra (z-index:-1) fica isolada no seu próprio contexto de
      empilhamento e nunca pinta por cima do .face. */
-  .opt,.btn{position:relative;z-index:0;display:block;width:100%;cursor:pointer;background:none;border:none;padding:0;font:inherit;color:inherit;-webkit-tap-highlight-color:transparent;}
-  .opt::after,.btn::after{content:'';position:absolute;inset:0;z-index:-1;background:var(--preto);transform:translate(-6px,6px);transition:background-color .15s ease;}
-  .opt::after{border-radius:999px;}
-  .btn::after{border-radius:50px;}
-  .opt:hover::after,.btn:hover::after{background:var(--azul-esc);}
+    .opt,
+    .btn {
+      position: relative;
+      z-index: 0;
+      display: block;
+      width: 100%;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  .face{display:block;transform:translate(0,0);transition:transform .15s ease-out,background-color .15s ease,border-color .15s ease,color .15s ease;}
-  .opt:hover .face,.btn:hover .face{transform:translate(4px,-4px);}
+    .opt::after,
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: var(--preto);
+      transform: translate(-6px, 6px);
+      transition: background-color .15s ease;
+    }
 
-  /* opções sem checkbox */
-  .opt{margin-bottom:16px;}
-  .opt .face{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:3px solid var(--preto);border-radius:999px;padding:17px 20px;font-family:var(--display);font-weight:600;font-size:14.5px;color:var(--preto);}
-  .opt:hover .face{border-color:var(--azul);}
-  .opt.picked .face{background:var(--azul);border-color:var(--azul);color:#fff;}
-  .opt .em{font-size:19px;}
+    .opt::after {
+      border-radius: 999px;
+    }
 
-  .btn{margin-top:8px;}
-  .btn .face{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--azul);color:#fff;border:3px solid var(--preto);border-radius:50px;padding:18px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.3px;text-align:center;text-decoration:none;}
-  .micro{text-align:center;font-size:12px;color:var(--cinza);margin-top:16px;}
-  .phone-footer{flex:none;text-align:center;font-size:11px;color:#c3c6d4;padding:8px 0 14px;font-family:var(--display);font-weight:600;letter-spacing:.3px;}
-  .phone.no-footer .phone-footer{display:none;}
+    .btn::after {
+      border-radius: 50px;
+    }
 
-  input.field{width:100%;background:#fff;border:2px solid #e6e6ec;border-radius:14px;padding:16px;font-family:var(--corpo);font-weight:600;font-size:16px;margin-bottom:16px;color:var(--preto);outline:none;}
-  input.field:focus{border-color:var(--azul);}
-  .err{color:#d33;font-size:13px;font-weight:600;margin:-4px 0 10px;display:none;}
+    .opt:hover::after,
+    .btn:hover::after {
+      background: var(--azul-esc);
+    }
 
-  /* loading */
-  .loader-wrap{text-align:center;padding-top:80px;}
-  .spinner{width:56px;height:56px;border:5px solid #dde1f0;border-top-color:var(--azul);border-radius:50%;margin:0 auto 26px;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .load-txt{font-family:var(--display);font-weight:700;font-size:17px;color:var(--preto);}
+    .face {
+      display: block;
+      transform: translate(0, 0);
+      transition: transform .15s ease-out, background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
 
-  /* diagnóstico */
-  .diag-card{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;border:1px solid #e6e6ec;}
-  .diag-card h3{font-family:var(--display);font-size:15px;margin-bottom:7px;display:flex;gap:8px;align-items:center;}
-  .diag-card p{font-size:14px;color:#55555f;line-height:1.55;}
-  .diag-card strong{color:var(--azul);}
-  .diag-head{background:linear-gradient(135deg,var(--azul),var(--azul-esc));color:#fff;border-radius:18px;padding:20px;margin-bottom:14px;}
-  .diag-head .t{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.3px;}
-  .diag-head .s{font-size:13px;opacity:.85;margin-top:4px;}
+    .opt:hover .face,
+    .btn:hover .face {
+      transform: translate(4px, -4px);
+    }
 
-  /* solução */
-  .ba-img{border-radius:18px;overflow:hidden;margin-bottom:18px;box-shadow:0 12px 30px rgba(7,26,107,.18);}
-  .ba-img img{width:100%;display:block;}
-  .offer{background:linear-gradient(135deg,var(--azul),var(--azul-esc));color:#fff;border-radius:18px;padding:22px;text-align:center;margin:18px 0;}
-  .offer .gift{font-size:30px;}
-  .offer .big{font-family:var(--display);font-weight:800;font-size:20px;line-height:1.25;margin:8px 0 4px;}
-  .offer .small{font-size:13px;opacity:.85;}
-  .steps-mini{display:flex;flex-direction:column;gap:10px;margin:16px 0;}
-  .steps-mini div{display:flex;gap:11px;align-items:center;background:#fff;border:1px solid #e6e6ec;border-radius:13px;padding:12px 14px;font-size:14px;font-weight:600;}
-  .steps-mini .em{font-size:19px;}
-  .link-human{display:block;text-align:center;font-size:13.5px;color:#8a8fa3;margin-top:14px;text-decoration:underline;cursor:pointer;}
-</style>
+    /* opções sem checkbox */
+    .opt {
+      margin-bottom: 16px;
+    }
+
+    .opt .face {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      border: 3px solid var(--preto);
+      border-radius: 999px;
+      padding: 17px 20px;
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 14.5px;
+      color: var(--preto);
+    }
+
+    .opt:hover .face {
+      border-color: var(--azul);
+    }
+
+    .opt.picked .face {
+      background: var(--azul);
+      border-color: var(--azul);
+      color: #fff;
+    }
+
+    .opt .em {
+      font-size: 19px;
+    }
+
+    .btn {
+      margin-top: 40px;
+    }
+
+    .btn .face {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: var(--azul);
+      color: #fff;
+      border: 3px solid var(--preto);
+      border-radius: 50px;
+      padding: 18px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: .3px;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .micro {
+      text-align: center;
+      font-size: 12px;
+      color: var(--cinza);
+      margin-top: 16px;
+    }
+
+    .phone-footer {
+      flex: none;
+      text-align: center;
+      font-size: 11px;
+      color: #c3c6d4;
+      padding: 8px 0 14px;
+      font-family: var(--display);
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+
+    .phone.no-footer .phone-footer {
+      display: none;
+    }
+
+    input.field {
+      width: 100%;
+      background: #fff;
+      border: 2px solid #e6e6ec;
+      border-radius: 14px;
+      padding: 16px;
+      font-family: var(--corpo);
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: var(--preto);
+      outline: none;
+    }
+
+    input.field:focus {
+      border-color: var(--azul);
+    }
+
+    .err {
+      color: #d33;
+      font-size: 13px;
+      font-weight: 600;
+      margin: -4px 0 10px;
+      display: none;
+    }
+
+    /* loading */
+    .loader-wrap {
+      text-align: center;
+      padding-top: 80px;
+    }
+
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 5px solid #dde1f0;
+      border-top-color: var(--azul);
+      border-radius: 50%;
+      margin: 0 auto 26px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .load-txt {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--preto);
+    }
+
+    /* diagnóstico */
+    .diag-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 14px;
+      border: 1px solid #e6e6ec;
+    }
+
+    .diag-card h3 {
+      font-family: var(--display);
+      font-size: 15px;
+      margin-bottom: 7px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .diag-card p {
+      font-size: 14px;
+      color: #55555f;
+      line-height: 1.55;
+    }
+
+    .diag-card strong {
+      color: var(--azul);
+    }
+
+    .diag-head {
+      background: linear-gradient(135deg, var(--azul), var(--azul-esc));
+      color: #fff;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    .diag-head .t {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 19px;
+      letter-spacing: -.3px;
+    }
+
+    .diag-head .s {
+      font-size: 13px;
+      opacity: .85;
+      margin-top: 4px;
+    }
+
+    /* solução */
+    .ba-img {
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 30px rgba(7, 26, 107, .18);
+    }
+
+    .ba-img img {
+      width: 100%;
+      display: block;
+    }
+
+    .offer {
+      background: linear-gradient(135deg, var(--azul), var(--azul-esc));
+      color: #fff;
+      border-radius: 18px;
+      padding: 22px;
+      text-align: center;
+      margin: 18px 0;
+    }
+
+    .offer .gift {
+      font-size: 30px;
+    }
+
+    .offer .big {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 1.25;
+      margin: 8px 0 4px;
+    }
+
+    .offer .small {
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    .steps-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .steps-mini div {
+      display: flex;
+      gap: 11px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #e6e6ec;
+      border-radius: 13px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .steps-mini .em {
+      font-size: 19px;
+    }
+
+    .link-human {
+      display: block;
+      text-align: center;
+      font-size: 13.5px;
+      color: #8a8fa3;
+      margin-top: 14px;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="phone no-footer">
-  <div class="progress"><div class="bar" id="bar"></div></div>
-
-  <div class="screen-stack">
-  <!-- TELA 0 -->
-  <div class="screen active" data-step="0">
-    <div class="hero-wrap">
-      <img class="hero-swoosh" src="m-swoosh.png" alt="">
-      <img class="hero-img" src="max fala.png" alt="Max acenando">
+  <div class="phone no-footer">
+    <div class="progress">
+      <div class="bar" id="bar"></div>
     </div>
 
-    <div class="s0-sheet">
-      <div class="content-col">
-        <h2 class="hero-title">Fala, chefe!</h2>
-        <p class="sub">Bora descobrir quanto tempo (e dinheiro) o orçamento no papel tá te custando?</p>
-        <p class="sub">São só <span class="hl">7 perguntinhas rápidas</span></p>
-        <p class="sub">No final eu mostro o seu diagnóstico.</p>
-        <button class="btn" onclick="pushUp()">bora!</button>
+    <div class="screen-stack">
+      <!-- TELA 0 -->
+      <div class="screen active" data-step="0">
+        <div class="hero-wrap">
+          <img class="hero-swoosh" src="m-swoosh.png" alt="">
+          <img class="hero-img" src="max fala.png" alt="Max acenando">
+        </div>
+
+        <div class="s0-sheet">
+          <div class="content-col">
+            <h2 class="hero-title">Fala, chefe!</h2>
+            <p class="sub">Bora descobrir quanto tempo (e dinheiro) o orçamento no papel tá te custando?</p>
+            <p class="sub">São só <span class="hl">7 perguntinhas rápidas</span></p>
+            <p class="sub">No final eu mostro o seu diagnóstico.</p>
+            <button class="btn" onclick="pushUp()">bora!</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 1 -->
+      <div class="screen" data-step="1">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 1 de 7</div>
+          <h2>Primeiro me conta: qual é a tua praia?</h2>
+          <button class="opt" onclick="pick(this,2)"><span class="em">🔨</span> Funilaria e pintura</button>
+          <button class="opt" onclick="pick(this,2)"><span class="em">✨</span> Estética automotiva /
+            detalhamento</button>
+          <button class="opt" onclick="pick(this,2)"><span class="em">🔧</span> Mecânica / borracharia</button>
+          <button class="opt" onclick="pick(this,2)"><span class="em">😅</span> Faço de tudo um pouco</button>
+        </div>
+      </div>
+
+      <div class="screen" data-step="2">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 2 de 7</div>
+          <h2>E hoje, como você monta teus orçamentos?</h2>
+          <button class="opt" onclick="pick(this,3)"><span class="em">📄</span> Papel e caneta (o clássico)</button>
+          <button class="opt" onclick="pick(this,3)"><span class="em">📱</span> No WhatsApp, na mão mesmo</button>
+          <button class="opt" onclick="pick(this,3)"><span class="em">💻</span> Uso um sistema/app</button>
+          <button class="opt" onclick="pick(this,3)"><span class="em">🤷</span> Depende do dia</button>
+        </div>
+      </div>
+
+      <!-- ETAPA 2 -->
+      <div class="screen" data-step="3">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 3 de 7 · sinceridade, chefe 👇</div>
+          <h2>Quanto tempo você gasta pra montar UM orçamento?</h2>
+          <button class="opt" onclick="pick(this,4,'menos de 10 min')">Menos de 10 min</button>
+          <button class="opt" onclick="pick(this,4,'10 a 30 min')">10 a 30 min</button>
+          <button class="opt" onclick="pick(this,4,'30 min a 1 hora')">30 min a 1 hora</button>
+          <button class="opt" onclick="pick(this,4,'mais de 1 hora')">Mais de 1 hora 😩</button>
+        </div>
+      </div>
+
+      <div class="screen" data-step="4">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 4 de 7</div>
+          <h2>Já perdeu cliente porque demorou pra mandar o orçamento?</h2>
+          <button class="opt" onclick="pick(this,5)"><span class="em">😡</span> Direto</button>
+          <button class="opt" onclick="pick(this,5)">Já aconteceu umas vezes</button>
+          <button class="opt" onclick="pick(this,5)">Quase nunca</button>
+          <button class="opt" onclick="pick(this,5)">Nunca (aí é sorte, viu)</button>
+        </div>
+      </div>
+
+      <div class="screen" data-step="5">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 5 de 7</div>
+          <h2>E quando o cliente vê teu preço, ele...</h2>
+          <button class="opt" onclick="pick(this,6)">Pechincha sempre</button>
+          <button class="opt" onclick="pick(this,6)">Negocia de vez em quando</button>
+          <button class="opt" onclick="pick(this,6)">Aceita de boa</button>
+          <button class="opt" onclick="pick(this,6)">Some e não responde 👻</button>
+        </div>
+      </div>
+
+      <!-- ETAPA 3 -->
+      <div class="screen" data-step="6">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 6 de 7 · agora o contrário...</div>
+          <h2>Se todo orçamento saísse em 30 segundos, o que você faria com o tempo que sobra?</h2>
+          <button class="opt" onclick="pick(this,7)"><span class="em">🚗</span> Atender mais carro e faturar
+            mais</button>
+          <button class="opt" onclick="pick(this,7)"><span class="em">🍽️</span> Jantar em paz com a família</button>
+          <button class="opt" onclick="pick(this,7)"><span class="em">😴</span> Ter domingo de volta</button>
+          <button class="opt" onclick="pick(this,7)"><span class="em">💪</span> Cobrar melhor sem dor de cabeça</button>
+        </div>
+      </div>
+
+      <div class="screen" data-step="7">
+        <div class="content-col">
+          <div class="step-tag">Pergunta 7 de 7</div>
+          <h2>E se o cliente parasse de pechinchar... quanto a mais você fecharia por mês?</h2>
+          <button class="opt" onclick="pick(this,8,'R$ 500 a R$ 1.000')">R$ 500 a R$ 1.000</button>
+          <button class="opt" onclick="pick(this,8,'R$ 1.000 a R$ 3.000')">R$ 1.000 a R$ 3.000</button>
+          <button class="opt" onclick="pick(this,8,'R$ 3.000 a R$ 5.000')">R$ 3.000 a R$ 5.000</button>
+          <button class="opt" onclick="pick(this,8,'mais de R$ 5.000')">Mais de R$ 5.000 🚀</button>
+        </div>
+      </div>
+
+      <!-- CAPTURA -->
+      <div class="screen" data-step="8">
+        <div class="content-col">
+          <div class="brand"><img class="brand-logo" src="assinatura digital.png" alt=""> MAX NO ZAP</div>
+          <h2>Pronto, chefe! Montei teu diagnóstico 🔧</h2>
+          <p class="sub">Com base no que você me contou, já sei onde tá vazando dinheiro na tua oficina. Me passa teu
+            WhatsApp que eu te mostro <b>e já te mando o resumo no Zap</b>:</p>
+          <input class="field" id="nome" placeholder="Como te chamo?" autocomplete="off">
+          <input class="field" id="zap" placeholder="Teu WhatsApp com DDD" inputmode="tel" autocomplete="off">
+          <p class="err" id="err">Pô, chefe, confere esse número aí 😅</p>
+          <button class="btn" onclick="capturar()">VER MEU DIAGNÓSTICO</button>
+          <p class="micro">Prometo: nada de spam. Só teu diagnóstico e teus 3 orçamentos grátis. 🤝</p>
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="screen" data-step="9">
+        <div class="content-col">
+          <div class="loader-wrap">
+            <div class="spinner"></div>
+            <div class="load-txt" id="loadTxt">Analisando tuas respostas...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIAGNÓSTICO -->
+      <div class="screen" data-step="10">
+        <div class="content-col">
+          <div class="diag-head">
+            <div class="t">🔧 DIAGNÓSTICO DO <span id="diagNome">CHEFE</span></div>
+            <div class="s">Feito com base nas tuas respostas</div>
+          </div>
+          <div class="diag-card">
+            <h3>⏱️ Tempo</h3>
+            <p>Se você gasta <strong id="diagTempo">~30 min</strong> por orçamento, isso dá fácil <strong>várias horas
+                por semana</strong> só fazendo orçamento. No mês, é praticamente <strong>uma semana inteira de
+                trabalho</strong> que não entra no caixa.</p>
+          </div>
+          <div class="diag-card">
+            <h3>💸 Dinheiro</h3>
+            <p>Cada pechinchada de 10% num serviço de R$ 800 = <strong>R$ 80 que ficam na mesa</strong>. Somando os
+              clientes que somem sem resposta, dá pra estar deixando <strong id="diagFaixa">R$ 1.000 a R$ 3.000</strong>
+              por mês sem nem perceber.</p>
+          </div>
+          <div class="diag-card">
+            <h3>🎯 Resumo</h3>
+            <p>Teu problema não é mão de obra, chefe. É <strong>velocidade e apresentação</strong>. O concorrente não é
+              melhor que você — ele só responde mais rápido e parece mais profissional.</p>
+          </div>
+          <button class="btn" onclick="go(11)">E AGORA, CHEFE? 👇</button>
+        </div>
+      </div>
+
+      <!-- SOLUÇÃO -->
+      <div class="screen" data-step="11">
+        <div class="content-col">
+          <div class="ba-img"><img src="assets/antes-depois.png"
+              alt="Antes: orçamento no papel · Depois: orçamento PDF profissional"></div>
+          <h2>Relaxa, chefe. Isso tem conserto — e eu resolvo. 🫡</h2>
+          <p class="sub">Sou o <b>Max</b>, teu funcionário digital no WhatsApp.</p>
+          <div class="steps-mini">
+            <div><span class="em">🎙️</span> Você manda o áudio do serviço</div>
+            <div><span class="em">⚡</span> Eu entendo e monto na hora</div>
+            <div><span class="em">📄</span> Sai o PDF profissional com a logo da tua oficina em 30s</div>
+          </div>
+          <div class="offer">
+            <div class="gift">🎁</div>
+            <div class="big">TEUS 3 PRIMEIROS ORÇAMENTOS SÃO GRÁTIS</div>
+            <div class="small">Sem cartão, sem compromisso. Testa na prática e vê com teus olhos.</div>
+          </div>
+          <a class="btn"
+            href="https://wa.me/5537999274941?text=Fala,%20Max!%20Fiz%20o%20quiz%20e%20vi%20meu%20diagn%C3%B3stico.%20Quero%20meus%203%20or%C3%A7amentos%20gr%C3%A1tis!"
+            target="_blank" rel="noopener">👉 MANDAR MEU PRIMEIRO ÁUDIO</a>
+          <span class="link-human">Prefiro falar com uma pessoa</span>
+        </div>
       </div>
     </div>
+
+    <div class="phone-footer">@maxnozape</div>
   </div>
 
-  <!-- ETAPA 1 -->
-  <div class="screen" data-step="1">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 1 de 7</div>
-      <h2>Primeiro me conta: qual é a tua praia?</h2>
-      <button class="opt" onclick="pick(this,2)"><span class="em">🔨</span> Funilaria e pintura</button>
-      <button class="opt" onclick="pick(this,2)"><span class="em">✨</span> Estética automotiva / detalhamento</button>
-      <button class="opt" onclick="pick(this,2)"><span class="em">🔧</span> Mecânica / borracharia</button>
-      <button class="opt" onclick="pick(this,2)"><span class="em">😅</span> Faço de tudo um pouco</button>
-    </div>
-  </div>
-
-  <div class="screen" data-step="2">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 2 de 7</div>
-      <h2>E hoje, como você monta teus orçamentos?</h2>
-      <button class="opt" onclick="pick(this,3)"><span class="em">📄</span> Papel e caneta (o clássico)</button>
-      <button class="opt" onclick="pick(this,3)"><span class="em">📱</span> No WhatsApp, na mão mesmo</button>
-      <button class="opt" onclick="pick(this,3)"><span class="em">💻</span> Uso um sistema/app</button>
-      <button class="opt" onclick="pick(this,3)"><span class="em">🤷</span> Depende do dia</button>
-    </div>
-  </div>
-
-  <!-- ETAPA 2 -->
-  <div class="screen" data-step="3">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 3 de 7 · sinceridade, chefe 👇</div>
-      <h2>Quanto tempo você gasta pra montar UM orçamento?</h2>
-      <button class="opt" onclick="pick(this,4,'menos de 10 min')">Menos de 10 min</button>
-      <button class="opt" onclick="pick(this,4,'10 a 30 min')">10 a 30 min</button>
-      <button class="opt" onclick="pick(this,4,'30 min a 1 hora')">30 min a 1 hora</button>
-      <button class="opt" onclick="pick(this,4,'mais de 1 hora')">Mais de 1 hora 😩</button>
-    </div>
-  </div>
-
-  <div class="screen" data-step="4">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 4 de 7</div>
-      <h2>Já perdeu cliente porque demorou pra mandar o orçamento?</h2>
-      <button class="opt" onclick="pick(this,5)"><span class="em">😡</span> Direto</button>
-      <button class="opt" onclick="pick(this,5)">Já aconteceu umas vezes</button>
-      <button class="opt" onclick="pick(this,5)">Quase nunca</button>
-      <button class="opt" onclick="pick(this,5)">Nunca (aí é sorte, viu)</button>
-    </div>
-  </div>
-
-  <div class="screen" data-step="5">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 5 de 7</div>
-      <h2>E quando o cliente vê teu preço, ele...</h2>
-      <button class="opt" onclick="pick(this,6)">Pechincha sempre</button>
-      <button class="opt" onclick="pick(this,6)">Negocia de vez em quando</button>
-      <button class="opt" onclick="pick(this,6)">Aceita de boa</button>
-      <button class="opt" onclick="pick(this,6)">Some e não responde 👻</button>
-    </div>
-  </div>
-
-  <!-- ETAPA 3 -->
-  <div class="screen" data-step="6">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 6 de 7 · agora o contrário...</div>
-      <h2>Se todo orçamento saísse em 30 segundos, o que você faria com o tempo que sobra?</h2>
-      <button class="opt" onclick="pick(this,7)"><span class="em">🚗</span> Atender mais carro e faturar mais</button>
-      <button class="opt" onclick="pick(this,7)"><span class="em">🍽️</span> Jantar em paz com a família</button>
-      <button class="opt" onclick="pick(this,7)"><span class="em">😴</span> Ter domingo de volta</button>
-      <button class="opt" onclick="pick(this,7)"><span class="em">💪</span> Cobrar melhor sem dor de cabeça</button>
-    </div>
-  </div>
-
-  <div class="screen" data-step="7">
-    <div class="content-col">
-      <div class="step-tag">Pergunta 7 de 7</div>
-      <h2>E se o cliente parasse de pechinchar... quanto a mais você fecharia por mês?</h2>
-      <button class="opt" onclick="pick(this,8,'R$ 500 a R$ 1.000')">R$ 500 a R$ 1.000</button>
-      <button class="opt" onclick="pick(this,8,'R$ 1.000 a R$ 3.000')">R$ 1.000 a R$ 3.000</button>
-      <button class="opt" onclick="pick(this,8,'R$ 3.000 a R$ 5.000')">R$ 3.000 a R$ 5.000</button>
-      <button class="opt" onclick="pick(this,8,'mais de R$ 5.000')">Mais de R$ 5.000 🚀</button>
-    </div>
-  </div>
-
-  <!-- CAPTURA -->
-  <div class="screen" data-step="8">
-    <div class="content-col">
-      <div class="brand"><img class="brand-logo" src="assinatura digital.png" alt=""> MAX NO ZAP</div>
-      <h2>Pronto, chefe! Montei teu diagnóstico 🔧</h2>
-      <p class="sub">Com base no que você me contou, já sei onde tá vazando dinheiro na tua oficina. Me passa teu WhatsApp que eu te mostro <b>e já te mando o resumo no Zap</b>:</p>
-      <input class="field" id="nome" placeholder="Como te chamo?" autocomplete="off">
-      <input class="field" id="zap" placeholder="Teu WhatsApp com DDD" inputmode="tel" autocomplete="off">
-      <p class="err" id="err">Pô, chefe, confere esse número aí 😅</p>
-      <button class="btn" onclick="capturar()">VER MEU DIAGNÓSTICO</button>
-      <p class="micro">Prometo: nada de spam. Só teu diagnóstico e teus 3 orçamentos grátis. 🤝</p>
-    </div>
-  </div>
-
-  <!-- LOADING -->
-  <div class="screen" data-step="9">
-    <div class="content-col">
-      <div class="loader-wrap">
-        <div class="spinner"></div>
-        <div class="load-txt" id="loadTxt">Analisando tuas respostas...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DIAGNÓSTICO -->
-  <div class="screen" data-step="10">
-    <div class="content-col">
-      <div class="diag-head">
-        <div class="t">🔧 DIAGNÓSTICO DO <span id="diagNome">CHEFE</span></div>
-        <div class="s">Feito com base nas tuas respostas</div>
-      </div>
-      <div class="diag-card">
-        <h3>⏱️ Tempo</h3>
-        <p>Se você gasta <strong id="diagTempo">~30 min</strong> por orçamento, isso dá fácil <strong>várias horas por semana</strong> só fazendo orçamento. No mês, é praticamente <strong>uma semana inteira de trabalho</strong> que não entra no caixa.</p>
-      </div>
-      <div class="diag-card">
-        <h3>💸 Dinheiro</h3>
-        <p>Cada pechinchada de 10% num serviço de R$ 800 = <strong>R$ 80 que ficam na mesa</strong>. Somando os clientes que somem sem resposta, dá pra estar deixando <strong id="diagFaixa">R$ 1.000 a R$ 3.000</strong> por mês sem nem perceber.</p>
-      </div>
-      <div class="diag-card">
-        <h3>🎯 Resumo</h3>
-        <p>Teu problema não é mão de obra, chefe. É <strong>velocidade e apresentação</strong>. O concorrente não é melhor que você — ele só responde mais rápido e parece mais profissional.</p>
-      </div>
-      <button class="btn" onclick="go(11)">E AGORA, CHEFE? 👇</button>
-    </div>
-  </div>
-
-  <!-- SOLUÇÃO -->
-  <div class="screen" data-step="11">
-    <div class="content-col">
-      <div class="ba-img"><img src="assets/antes-depois.png" alt="Antes: orçamento no papel · Depois: orçamento PDF profissional"></div>
-      <h2>Relaxa, chefe. Isso tem conserto — e eu resolvo. 🫡</h2>
-      <p class="sub">Sou o <b>Max</b>, teu funcionário digital no WhatsApp.</p>
-      <div class="steps-mini">
-        <div><span class="em">🎙️</span> Você manda o áudio do serviço</div>
-        <div><span class="em">⚡</span> Eu entendo e monto na hora</div>
-        <div><span class="em">📄</span> Sai o PDF profissional com a logo da tua oficina em 30s</div>
-      </div>
-      <div class="offer">
-        <div class="gift">🎁</div>
-        <div class="big">TEUS 3 PRIMEIROS ORÇAMENTOS SÃO GRÁTIS</div>
-        <div class="small">Sem cartão, sem compromisso. Testa na prática e vê com teus olhos.</div>
-      </div>
-      <a class="btn" href="https://wa.me/5537999274941?text=Fala,%20Max!%20Fiz%20o%20quiz%20e%20vi%20meu%20diagn%C3%B3stico.%20Quero%20meus%203%20or%C3%A7amentos%20gr%C3%A1tis!" target="_blank" rel="noopener">👉 MANDAR MEU PRIMEIRO ÁUDIO</a>
-      <span class="link-human">Prefiro falar com uma pessoa</span>
-    </div>
-  </div>
-  </div>
-
-  <div class="phone-footer">@maxnozape</div>
-</div>
-
-<script>
-  // envolve o conteúdo de cada .opt/.btn num .face — o "rosto" que se
-  // desloca no hover, mantendo a sombra (::after do container) parada
-  document.querySelectorAll('.opt, .btn').forEach(el => {
-    const face = document.createElement('span');
-    face.className = 'face';
-    while (el.firstChild) face.appendChild(el.firstChild);
-    el.appendChild(face);
-  });
-
-  const total = 11;
-  let tempo = '~30 min', faixa = 'R$ 1.000 a R$ 3.000';
-
-  function showStep(n){
-    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', +s.dataset.step === n));
-    document.getElementById('bar').style.width = (n / total * 100) + '%';
-    document.querySelector('.phone').classList.toggle('no-footer', n === 0);
-    document.querySelector('.phone').scrollTop = 0;
-  }
-  function go(n){ showStep(n); }
-
-  const EASE = 'cubic-bezier(.32,0,.24,1)';
-
-  // deixa um grupo de elementos pronto no estado "escondido" (direita, invisível), sem transição
-  function primeHidden(items){
-    items.forEach(it => {
-      it.style.transition = 'none';
-      it.style.opacity = '0';
-      it.style.transform = 'translateX(28px)';
-    });
-  }
-
-  // anima um grupo de elementos já escondidos entrando da direita, um após o outro
-  function revealStagger(items, stepMs, durMs){
-    void document.body.offsetWidth;
-    items.forEach((it, i) => {
-      const delay = i * stepMs;
-      it.style.transition = `transform ${durMs}ms ease ${delay}ms, opacity ${durMs}ms ease ${delay}ms`;
-      requestAnimationFrame(() => {
-        it.style.opacity = '1';
-        it.style.transform = 'translateX(0)';
-      });
-    });
-    const totalMs = items.length * stepMs + durMs + 20;
-    setTimeout(() => {
-      items.forEach(it => { it.style.transition = ''; it.style.opacity = ''; it.style.transform = ''; });
-    }, totalMs);
-  }
-
-  // clique em "bora!": tela 0 sobe e sai, pergunta 1 entra subindo de baixo
-  function pushUp(){
-    const oldS = document.querySelector('.screen[data-step="0"]');
-    const newS = document.querySelector('.screen[data-step="1"]');
-    const newOpts = Array.from(newS.querySelectorAll('.opt'));
-
-    document.getElementById('bar').style.width = (1 / total * 100) + '%';
-    document.querySelector('.phone').classList.remove('no-footer');
-
-    // as opções da pergunta 1 já entram escondidas — só o título aparece junto com o push
-    primeHidden(newOpts);
-
-    newS.style.transition = 'none';
-    newS.style.transform = 'translateY(100%)';
-    newS.classList.add('active');
-    void newS.offsetWidth; // força o reflow antes de animar
-
-    oldS.style.transition = `transform .6s ${EASE}`;
-    newS.style.transition = `transform .6s ${EASE}`;
-    requestAnimationFrame(() => {
-      oldS.style.transform = 'translateY(-100%)';
-      newS.style.transform = 'translateY(0)';
+  <script>
+    // envolve o conteúdo de cada .opt/.btn num .face — o "rosto" que se
+    // desloca no hover, mantendo a sombra (::after do container) parada
+    document.querySelectorAll('.opt, .btn').forEach(el => {
+      const face = document.createElement('span');
+      face.className = 'face';
+      while (el.firstChild) face.appendChild(el.firstChild);
+      el.appendChild(face);
     });
 
-    setTimeout(() => {
-      oldS.classList.remove('active');
-      oldS.style.transition = '';
-      oldS.style.transform = '';
-      newS.style.transition = '';
-      newS.style.transform = '';
+    const total = 11;
+    let tempo = '~30 min', faixa = 'R$ 1.000 a R$ 3.000';
+
+    function showStep(n) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', +s.dataset.step === n));
+      document.getElementById('bar').style.width = (n / total * 100) + '%';
+      document.querySelector('.phone').classList.toggle('no-footer', n === 0);
       document.querySelector('.phone').scrollTop = 0;
-      revealStagger(newOpts, 90, 300);
-    }, 620);
-  }
+    }
+    function go(n) { showStep(n); }
 
-  // elementos do .content-col da tela entram deslizando da direita, um após o outro
-  function staggerIn(screen){
-    const col = screen.querySelector('.content-col') || screen;
-    const items = Array.from(col.children);
-    primeHidden(items);
-    void screen.offsetWidth;
-    revealStagger(items, 90, 320);
-  }
+    const EASE = 'cubic-bezier(.32,0,.24,1)';
 
-  // elementos de um .content-col saem deslizando pra esquerda, um após o outro
-  function staggerOut(col, cb){
-    const items = Array.from(col.children);
-    items.forEach((it, i) => {
-      const delay = i * 70;
-      it.style.transition = `transform .22s ease ${delay}ms, opacity .22s ease ${delay}ms`;
-      it.style.opacity = '0';
-      it.style.transform = 'translateX(-28px)';
-    });
-    setTimeout(cb, items.length * 70 + 220);
-  }
+    // deixa um grupo de elementos pronto no estado "escondido" (direita, invisível), sem transição
+    function primeHidden(items) {
+      items.forEach(it => {
+        it.style.transition = 'none';
+        it.style.opacity = '0';
+        it.style.transform = 'translateX(28px)';
+      });
+    }
 
-  function pick(el, next, val){
-    el.classList.add('picked');
-    const curCol = el.parentElement;
-    const curStep = +el.closest('.screen').dataset.step;
-    if (curStep === 3) tempo = '~' + (val || '30 min');
-    if (curStep === 7) faixa = val || faixa;
+    // anima um grupo de elementos já escondidos entrando da direita, um após o outro
+    function revealStagger(items, stepMs, durMs) {
+      void document.body.offsetWidth;
+      items.forEach((it, i) => {
+        const delay = i * stepMs;
+        it.style.transition = `transform ${durMs}ms ease ${delay}ms, opacity ${durMs}ms ease ${delay}ms`;
+        requestAnimationFrame(() => {
+          it.style.opacity = '1';
+          it.style.transform = 'translateX(0)';
+        });
+      });
+      const totalMs = items.length * stepMs + durMs + 20;
+      setTimeout(() => {
+        items.forEach(it => { it.style.transition = ''; it.style.opacity = ''; it.style.transform = ''; });
+      }, totalMs);
+    }
 
-    staggerOut(curCol, () => {
-      Array.from(curCol.children).forEach(it => { it.style.transition = ''; it.style.opacity = ''; it.style.transform = ''; });
-      go(next);
-      if (next >= 1 && next <= 7) staggerIn(document.querySelector(`.screen[data-step="${next}"]`));
-    });
-  }
-  function capturar(){
-    const nome = document.getElementById('nome').value.trim() || 'CHEFE';
-    const zap = document.getElementById('zap').value.replace(/\D/g,'');
-    if (zap.length < 10){ document.getElementById('err').style.display = 'block'; return; }
-    document.getElementById('err').style.display = 'none';
-    document.getElementById('diagNome').textContent = nome.toUpperCase();
-    document.getElementById('diagTempo').textContent = tempo;
-    document.getElementById('diagFaixa').textContent = faixa;
-    showStep(9);
-    const msgs = ['Analisando tuas respostas...','Calculando quanto tá ficando na mesa...','Pronto! 🔧'];
-    msgs.forEach((m,i) => setTimeout(() => document.getElementById('loadTxt').textContent = m, i*900));
-    setTimeout(() => showStep(10), 2900);
-  }
-</script>
+    // clique em "bora!": tela 0 sobe e sai, pergunta 1 entra subindo de baixo
+    function pushUp() {
+      const oldS = document.querySelector('.screen[data-step="0"]');
+      const newS = document.querySelector('.screen[data-step="1"]');
+      const newOpts = Array.from(newS.querySelectorAll('.opt'));
 
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7"}' crossorigin="anonymous"></script>
+      document.getElementById('bar').style.width = (1 / total * 100) + '%';
+      document.querySelector('.phone').classList.remove('no-footer');
+
+      // as opções da pergunta 1 já entram escondidas — só o título aparece junto com o push
+      primeHidden(newOpts);
+
+      newS.style.transition = 'none';
+      newS.style.transform = 'translateY(100%)';
+      newS.classList.add('active');
+      void newS.offsetWidth; // força o reflow antes de animar
+
+      oldS.style.transition = `transform .6s ${EASE}`;
+      newS.style.transition = `transform .6s ${EASE}`;
+      requestAnimationFrame(() => {
+        oldS.style.transform = 'translateY(-100%)';
+        newS.style.transform = 'translateY(0)';
+      });
+
+      setTimeout(() => {
+        oldS.classList.remove('active');
+        oldS.style.transition = '';
+        oldS.style.transform = '';
+        newS.style.transition = '';
+        newS.style.transform = '';
+        document.querySelector('.phone').scrollTop = 0;
+        revealStagger(newOpts, 90, 300);
+      }, 620);
+    }
+
+    // elementos do .content-col da tela entram deslizando da direita, um após o outro
+    function staggerIn(screen) {
+      const col = screen.querySelector('.content-col') || screen;
+      const items = Array.from(col.children);
+      primeHidden(items);
+      void screen.offsetWidth;
+      revealStagger(items, 90, 320);
+    }
+
+    // elementos de um .content-col saem deslizando pra esquerda, um após o outro
+    function staggerOut(col, cb) {
+      const items = Array.from(col.children);
+      items.forEach((it, i) => {
+        const delay = i * 70;
+        it.style.transition = `transform .22s ease ${delay}ms, opacity .22s ease ${delay}ms`;
+        it.style.opacity = '0';
+        it.style.transform = 'translateX(-28px)';
+      });
+      setTimeout(cb, items.length * 70 + 220);
+    }
+
+    function pick(el, next, val) {
+      el.classList.add('picked');
+      const curCol = el.parentElement;
+      const curStep = +el.closest('.screen').dataset.step;
+      if (curStep === 3) tempo = '~' + (val || '30 min');
+      if (curStep === 7) faixa = val || faixa;
+
+      staggerOut(curCol, () => {
+        Array.from(curCol.children).forEach(it => { it.style.transition = ''; it.style.opacity = ''; it.style.transform = ''; });
+        go(next);
+        if (next >= 1 && next <= 7) staggerIn(document.querySelector(`.screen[data-step="${next}"]`));
+      });
+    }
+    function capturar() {
+      const nome = document.getElementById('nome').value.trim() || 'CHEFE';
+      const zap = document.getElementById('zap').value.replace(/\D/g, '');
+      if (zap.length < 10) { document.getElementById('err').style.display = 'block'; return; }
+      document.getElementById('err').style.display = 'none';
+      document.getElementById('diagNome').textContent = nome.toUpperCase();
+      document.getElementById('diagTempo').textContent = tempo;
+      document.getElementById('diagFaixa').textContent = faixa;
+      showStep(9);
+      const msgs = ['Analisando tuas respostas...', 'Calculando quanto tá ficando na mesa...', 'Pronto! 🔧'];
+      msgs.forEach((m, i) => setTimeout(() => document.getElementById('loadTxt').textContent = m, i * 900));
+      setTimeout(() => showStep(10), 2900);
+    }
+  </script>
+
+  <script type="module"
+    src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496"
+    integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ=="
+    data-cf-beacon='{"version":"2024.11.0","token":"4655f3c58dd6497fb7ddb85b68480db7"}'
+    crossorigin="anonymous"></script>
 </body>
+
 </html>
