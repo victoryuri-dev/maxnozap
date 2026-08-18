@@ -1,0 +1,621 @@
+---
+export interface Props {
+  title?: string;
+}
+
+const { title = 'Quiz — Max no Zap' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Boldonse&family=Epilogue:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  @keyframes hero-surgir {
+    0% {
+      transform: translateY(60%) translateX(-50%);
+    }
+    100% {
+      transform: translateY(0) translateX(-50%);
+    }
+  }
+
+  @keyframes surgir {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  :root {
+    --azul: #0e33eb;
+    --azul-esc: #081b80;
+    --verde: #c6ff3d;
+    --gelo: #f4f4f4;
+    --preto: #0d0d0d;
+    --cinza: #8a8fa3;
+    --display: 'Epilogue', sans-serif;
+    --display-hero: 'Boldonse', sans-serif;
+    --corpo: 'Epilogue', sans-serif;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--corpo);
+    background: var(--gelo);
+  }
+
+  /* .phone = casca de fundo, ocupa a viewport inteira; o conteúdo (texto,
+   formulário, botões) fica sempre restrito ao tamanho de celular via .content-col */
+  .phone {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--gelo);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-col {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 28px 24px 32px;
+  }
+
+  /* progresso */
+  .progress {
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+    height: 6px;
+    background: #dde1f0;
+    flex: none;
+  }
+
+  .progress .bar {
+    height: 100%;
+    background: var(--azul);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .screen-stack {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    display: none;
+    animation: fade 0.45s ease;
+  }
+
+  .screen.active {
+    display: block;
+  }
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* telas 0-7 usam transições próprias via JS (push/stagger), sem o fade padrão */
+  .screen[data-step='0'],
+  .screen[data-step='1'],
+  .screen[data-step='2'],
+  .screen[data-step='3'],
+  .screen[data-step='4'],
+  .screen[data-step='5'],
+  .screen[data-step='6'],
+  .screen[data-step='7'] {
+    animation: none;
+  }
+
+  .brand {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--azul);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand .brand-logo {
+    height: 24px;
+    width: auto;
+    display: block;
+  }
+
+  .step-tag {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--cinza);
+    margin-bottom: 14px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    margin-bottom: 24px;
+    color: var(--preto);
+  }
+
+  .sub {
+    font-size: 16px;
+    color: #55555f;
+    line-height: 1.55;
+    margin-bottom: 18px;
+  }
+
+  .sub .hl {
+    color: var(--azul);
+    font-weight: 700;
+  }
+
+  /* tela 0 — hero azul full-bleed com a folha branca sobrepondo por cima */
+  .screen[data-step='0'] {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* hero da tela 0 */
+  .hero-wrap {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: var(--azul);
+    z-index: 1;
+  }
+
+  .hero-swoosh {
+    position: absolute;
+    width: 420vw;
+    max-width: none;
+    left: 46%;
+    top: 30%;
+    transform: translate(-50%, -50%) rotate(4deg);
+    z-index: 1;
+    filter: brightness(0.9);
+  }
+
+  .hero-img {
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    width: 95%;
+    min-width: 325px;
+    transform: translateX(-50%);
+    z-index: 2;
+    animation: hero-surgir 0.8s cubic-bezier(0.68, -0.4, 0.32, 1.2);
+  }
+
+  .s0-sheet {
+    position: absolute;
+    margin: auto;
+    width: 100%;
+    left: 0;
+    right: 0;
+    min-height: fit-content;
+    height: 55%;
+    bottom: 0;
+    padding: 30px 0px 0;
+    z-index: 3;
+    background: var(--gelo);
+    border-radius: 30px 30px 0 0;
+    overflow-y: auto;
+    animation: 0.6s ease-in-out surgir;
+    overflow-y: hidden;
+  }
+
+  .s0-sheet .content-col {
+    animation: 0.8s ease-in-out surgir;
+  }
+
+  .s0-sheet .content-col h2 {
+    animation: 0.9s ease-in-out surgir;
+  }
+  .s0-sheet .content-col p:nth-of-type(1) {
+    animation: 1s ease-in-out surgir;
+  }
+  .s0-sheet .content-col p:nth-of-type(2) {
+    animation: 1.3s ease-in-out surgir;
+  }
+  .s0-sheet .content-col p:nth-of-type(3) {
+    animation: 1.4s ease-in-out surgir;
+  }
+  .s0-sheet .content-col .btn {
+    animation: 1.5s ease-in-out surgir;
+  }
+
+  @media screen and (min-width: 420px) {
+    .s0-sheet {
+      width: fit-content;
+      padding: 30px 30px 0;
+    }
+
+    .hero-img {
+      max-width: 420px;
+    }
+
+    .hero-swoosh {
+      width: 150vw;
+    }
+  }
+
+  .s0-sheet .content-col {
+    padding: 34px 26px 30px;
+  }
+
+  h2.hero-title {
+    font-family: var(--display-hero);
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.1;
+    letter-spacing: 0;
+    margin: 0 0 30px;
+    text-transform: uppercase;
+  }
+
+  /* botões estilo "shadow box": container (.opt/.btn) só ancora a sombra;
+   quem tem o fundo/borda e se desloca no hover é o .face interno —
+   assim a sombra (z-index:-1) fica isolada no seu próprio contexto de
+   empilhamento e nunca pinta por cima do .face. */
+  .opt,
+  .btn {
+    position: relative;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .opt::after,
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--preto);
+    transform: translate(-6px, 6px);
+    transition: background-color 0.15s ease;
+  }
+
+  .opt::after {
+    border-radius: 999px;
+  }
+
+  .btn::after {
+    border-radius: 50px;
+  }
+
+  .opt:hover::after,
+  .btn:hover::after {
+    background: var(--azul-esc);
+  }
+
+  .face {
+    display: block;
+    transform: translate(0, 0);
+    transition:
+      transform 0.15s ease-out,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .opt:hover .face,
+  .btn:hover .face {
+    transform: translate(4px, -4px);
+  }
+
+  /* opções sem checkbox */
+  .opt {
+    margin-bottom: 16px;
+  }
+
+  .opt .face {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 3px solid var(--preto);
+    border-radius: 999px;
+    padding: 17px 20px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--preto);
+  }
+
+  .opt:hover .face {
+    border-color: var(--azul);
+  }
+
+  .opt.picked .face {
+    background: var(--azul);
+    border-color: var(--azul);
+    color: #fff;
+  }
+
+  .opt .em {
+    font-size: 19px;
+  }
+
+  .btn {
+    margin-top: 40px;
+  }
+
+  .btn .face {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--azul);
+    color: #fff;
+    border: 3px solid var(--preto);
+    border-radius: 50px;
+    padding: 18px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .micro {
+    text-align: center;
+    font-size: 12px;
+    color: var(--cinza);
+    margin-top: 16px;
+  }
+
+  .phone-footer {
+    flex: none;
+    text-align: center;
+    font-size: 11px;
+    color: #c3c6d4;
+    padding: 8px 0 14px;
+    font-family: var(--display);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .phone.no-footer .phone-footer {
+    display: none;
+  }
+
+  input.field {
+    width: 100%;
+    background: #fff;
+    border: 2px solid #e6e6ec;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: var(--corpo);
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--preto);
+    outline: none;
+  }
+
+  input.field:focus {
+    border-color: var(--azul);
+  }
+
+  .err {
+    color: #d33;
+    font-size: 13px;
+    font-weight: 600;
+    margin: -4px 0 10px;
+    display: none;
+  }
+
+  /* loading */
+  .loader-wrap {
+    text-align: center;
+    padding-top: 80px;
+  }
+
+  .spinner {
+    width: 56px;
+    height: 56px;
+    border: 5px solid #dde1f0;
+    border-top-color: var(--azul);
+    border-radius: 50%;
+    margin: 0 auto 26px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .load-txt {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--preto);
+  }
+
+  /* diagnóstico */
+  .diag-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 14px;
+    border: 1px solid #e6e6ec;
+  }
+
+  .diag-card h3 {
+    font-family: var(--display);
+    font-size: 15px;
+    margin-bottom: 7px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .diag-card p {
+    font-size: 14px;
+    color: #55555f;
+    line-height: 1.55;
+  }
+
+  .diag-card strong {
+    color: var(--azul);
+  }
+
+  .diag-head {
+    background: linear-gradient(135deg, var(--azul), var(--azul-esc));
+    color: #fff;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+
+  .diag-head .t {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: -0.3px;
+  }
+
+  .diag-head .s {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  /* solução */
+  .ba-img {
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 30px rgba(7, 26, 107, 0.18);
+  }
+
+  .ba-img img {
+    width: 100%;
+    display: block;
+  }
+
+  .offer {
+    background: linear-gradient(135deg, var(--azul), var(--azul-esc));
+    color: #fff;
+    border-radius: 18px;
+    padding: 22px;
+    text-align: center;
+    margin: 18px 0;
+  }
+
+  .offer .gift {
+    font-size: 30px;
+  }
+
+  .offer .big {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 20px;
+    line-height: 1.25;
+    margin: 8px 0 4px;
+  }
+
+  .offer .small {
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  .steps-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .steps-mini div {
+    display: flex;
+    gap: 11px;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e6e6ec;
+    border-radius: 13px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .steps-mini .em {
+    font-size: 19px;
+  }
+
+  .link-human {
+    display: block;
+    text-align: center;
+    font-size: 13.5px;
+    color: #8a8fa3;
+    margin-top: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>
