@@ -42,6 +42,15 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     }
   }
 
+  @keyframes surgir {
+    0% {
+      transform: translateY(200%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
   :root {
     --azul: #0e33eb;
     --azul-esc: #081b80;
@@ -49,6 +58,7 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     --gelo: #f4f4f4;
     --preto: #0d0d0d;
     --cinza: #8a8fa3;
+    --vermelho: #ff3b30;
     --display: 'Epilogue', sans-serif;
     --display-hero: 'Boldonse', sans-serif;
     --corpo: 'Epilogue', sans-serif;
@@ -86,6 +96,7 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     max-width: 420px;
     margin: 0 auto;
     padding: 28px 24px 32px;
+    position: relative;
   }
 
   /* progresso */
@@ -119,11 +130,16 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     overflow-x: hidden;
     padding: 0;
     display: none;
-    animation: fade 0.45s ease;
   }
 
   .screen.active {
     display: block;
+  }
+
+  /* telas com transição própria via JS (push/stagger) não levam o fade — só quem
+   pede .fade-screen (hoje, só a solução) usa a animação padrão */
+  .screen.fade-screen {
+    animation: fade 0.45s ease;
   }
 
   @keyframes fade {
@@ -138,16 +154,44 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     }
   }
 
-  /* telas 0-7 usam transições próprias via JS (push/stagger), sem o fade padrão */
-  .screen[data-step='0'],
-  .screen[data-step='1'],
-  .screen[data-step='2'],
-  .screen[data-step='3'],
-  .screen[data-step='4'],
-  .screen[data-step='5'],
-  .screen[data-step='6'],
-  .screen[data-step='7'] {
-    animation: none;
+  /* loading e diagnóstico continuam no azul da tela 0, sem cortar pro fundo claro */
+  .screen.bg-azul {
+    background: var(--azul);
+  }
+
+  /* tela de transição: só um texto centralizado, tocável em qualquer ponto pra avançar */
+  .screen.transition-screen.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* cobre a tela inteira: tocar em qualquer ponto (inclusive sobre o texto) avança —
+   funciona porque é transparente e fica por cima só pra efeito de clique, nunca visual.
+   z-index maior que o da .s0-sheet (3), senão a folha branca fica na frente e engole o toque */
+  .screen-tap {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: none;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .transition-text {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 1.35;
+    letter-spacing: -0.3px;
+    color: var(--preto);
+    text-align: center;
+    margin: 0 0 14px;
+  }
+
+  .transition-screen .micro {
+    margin-top: 0;
   }
 
   .brand {
@@ -189,7 +233,7 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
   }
 
   .sub {
-    font-size: 16px;
+    font-size: 17.5px;
     color: #55555f;
     line-height: 1.55;
     margin-bottom: 18px;
@@ -200,13 +244,14 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     font-weight: 700;
   }
 
-  /* tela 0 — hero azul full-bleed com a folha branca sobrepondo por cima */
-  .screen[data-step='0'] {
+  /* telas com hero azul full-bleed + folha branca sobrepondo por cima — tela 0 e a
+   abertura da solução são as duas telas com esse tratamento hoje */
+  .screen.hero-screen {
     padding: 0;
     overflow: hidden;
   }
 
-  /* hero da tela 0 */
+  /* hero das telas .hero-screen */
   .hero-wrap {
     position: absolute;
     inset: 0;
@@ -245,6 +290,7 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     right: 0;
     min-height: fit-content;
     height: 55%;
+    width: 100%;
     bottom: 0;
     padding: 30px 0px 0;
     z-index: 3;
@@ -268,11 +314,38 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
   .s0-sheet .content-col p:nth-of-type(2) {
     animation: 1.3s ease-in-out surgir;
   }
+  .s0-sheet .content-col .step-pill {
+    animation: 1.35s ease-in-out surgir;
+  }
   .s0-sheet .content-col p:nth-of-type(3) {
     animation: 1.4s ease-in-out surgir;
   }
   .s0-sheet .content-col .btn {
     animation: 1.5s ease-in-out surgir;
+  }
+
+  .step-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--azul);
+    color: #fff;
+    border-radius: 999px;
+    padding: 16px 20px;
+    margin: 6px 0 2px;
+  }
+
+  .step-pill-icon {
+    flex: none;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .step-pill-text {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 14.5px;
+    line-height: 1.35;
   }
 
   @media screen and (min-width: 420px) {
@@ -298,7 +371,7 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     font-family: var(--display-hero);
     font-weight: 400;
     font-size: 30px;
-    line-height: 1.1;
+    line-height: 1.35;
     letter-spacing: 0;
     margin: 0 0 30px;
     text-transform: uppercase;
@@ -470,16 +543,22 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
   }
 
   /* loading */
+  .loading-content {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .loader-wrap {
     text-align: center;
-    padding-top: 80px;
   }
 
   .spinner {
     width: 56px;
     height: 56px;
-    border: 5px solid #dde1f0;
-    border-top-color: var(--azul);
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
     border-radius: 50%;
     margin: 0 auto 26px;
     animation: spin 1s linear infinite;
@@ -495,127 +574,258 @@ const { title = 'Quiz — Max no Zap' } = Astro.props;
     font-family: var(--display);
     font-weight: 700;
     font-size: 17px;
+    color: #fff;
+  }
+
+  /* diagnóstico — o prejuízo é o herói da tela (grande, sozinho), o resto é
+   só 3 fatos rápidos de escanear, não parágrafo pra ler */
+  .diag-hero {
+    text-align: center;
+    padding: 6px 4px 30px;
+  }
+
+  .diag-hero-eyebrow {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 12px;
+  }
+
+  .diag-hero-lead {
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .diag-hero-lead strong {
+    font-weight: 800;
+  }
+
+  .diag-hero-value {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.3px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .diag-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+
+  .diag-row-icon {
+    flex: none;
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .diag-row-title {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--preto);
+    margin-bottom: 2px;
+  }
+
+  .diag-row-sub {
+    font-size: 13px;
+    color: #6b6f7d;
+    line-height: 1.4;
+  }
+
+  .diag-veredito {
+    font-size: 15px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    margin: 18px 0 26px;
+  }
+
+  .diag-veredito strong {
+    color: #fff;
+  }
+
+  .diag-cta-lead {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  /* variante lima do .btn — usada no CTA do diagnóstico */
+  .btn.btn-lime .face {
+    background: var(--verde);
     color: var(--preto);
   }
 
-  /* diagnóstico */
-  .diag-card {
-    background: #fff;
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 14px;
-    border: 1px solid #e6e6ec;
+  /* mesma lógica da .s0-sheet: cada bloco tem uma duração diferente da animação
+   "surgir" — como todos começam juntos, quem tem duração maior ainda está subindo
+   quando quem tem duração menor já parou, e isso cria a cascata */
+  .diag-content .diag-hero {
+    animation: 0.9s ease-in-out surgir;
+  }
+  .diag-content .diag-row:nth-of-type(2) {
+    animation: 1s ease-in-out surgir;
+  }
+  .diag-content .diag-row:nth-of-type(3) {
+    animation: 1.15s ease-in-out surgir;
+  }
+  .diag-content .diag-row:nth-of-type(4) {
+    animation: 1.3s ease-in-out surgir;
+  }
+  .diag-content .diag-veredito {
+    animation: 1.45s ease-in-out surgir;
+  }
+  .diag-content .diag-cta-lead {
+    animation: 1.6s ease-in-out surgir;
+  }
+  .diag-content .btn {
+    animation: 1.75s ease-in-out surgir;
   }
 
-  .diag-card h3 {
-    font-family: var(--display);
-    font-size: 15px;
-    margin-bottom: 7px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
+  /* solução — CTA final: manda pro WhatsApp */
+  .audio-head {
+    position: relative;
+    margin-bottom: 26px;
   }
 
-  .diag-card p {
-    font-size: 14px;
-    color: #55555f;
-    line-height: 1.55;
+  .audio-head h2 {
+    margin-bottom: 0;
+    padding-right: 100px;
   }
 
-  .diag-card strong {
-    color: var(--azul);
+  .whats-sticker {
+    position: absolute;
+    top: 52px;
+    right: -14px;
+    width: 224px;
+    height: auto;
   }
 
-  .diag-head {
-    background: linear-gradient(135deg, var(--azul), var(--azul-esc));
-    color: #fff;
-    border-radius: 18px;
-    padding: 20px;
-    margin-bottom: 14px;
-  }
-
-  .diag-head .t {
+  .audio-note {
     font-family: var(--display);
     font-weight: 800;
     font-size: 19px;
-    letter-spacing: -0.3px;
+    color: var(--preto);
+    line-height: 1.4;
   }
 
-  .diag-head .s {
-    font-size: 13px;
-    opacity: 0.85;
-    margin-top: 4px;
+  .audio-note:first-of-type {
+    margin-top: 130px;
   }
 
-  /* solução */
-  .ba-img {
-    border-radius: 18px;
-    overflow: hidden;
-    margin-bottom: 18px;
-    box-shadow: 0 12px 30px rgba(7, 26, 107, 0.18);
+  .hl-red {
+    color: var(--vermelho);
   }
 
-  .ba-img img {
+  .audio-cta {
+    position: relative;
+    display: block;
     width: 100%;
-    display: block;
-  }
-
-  .offer {
-    background: linear-gradient(135deg, var(--azul), var(--azul-esc));
+    background: var(--azul);
     color: #fff;
-    border-radius: 18px;
-    padding: 22px;
     text-align: center;
-    margin: 18px 0;
-  }
-
-  .offer .gift {
-    font-size: 30px;
-  }
-
-  .offer .big {
     font-family: var(--display);
     font-weight: 800;
-    font-size: 20px;
-    line-height: 1.25;
-    margin: 8px 0 4px;
+    font-size: 16px;
+    letter-spacing: 0.2px;
+    padding: 18px;
+    border-radius: 14px;
+    text-decoration: none;
+    margin: 30px 0 22px;
   }
 
-  .offer .small {
-    font-size: 13px;
-    opacity: 0.85;
+  .audio-cta::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 9px solid var(--azul);
   }
 
-  .steps-mini {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 16px 0;
-  }
-
-  .steps-mini div {
-    display: flex;
-    gap: 11px;
-    align-items: center;
-    background: #fff;
-    border: 1px solid #e6e6ec;
-    border-radius: 13px;
-    padding: 12px 14px;
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  .steps-mini .em {
-    font-size: 19px;
-  }
-
-  .link-human {
+  .gift-img {
     display: block;
-    text-align: center;
-    font-size: 13.5px;
-    color: #8a8fa3;
-    margin-top: 14px;
-    text-decoration: underline;
+    position: absolute;
+    width: 77vh;
+    left: -230px;
+    margin: 12px auto 0;
+  }
+
+  /* ferramenta de dev — só existe em `astro dev`, nunca no build publicado */
+  .dev-nav {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(13, 13, 13, 0.88);
+    border-radius: 999px;
+    padding: 6px 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  }
+
+  .dev-nav-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 15px;
+    line-height: 1;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dev-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .dev-nav-step {
+    width: 34px;
+    text-align: center;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 11px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 4px 2px;
+    -moz-appearance: textfield;
+  }
+
+  .dev-nav-step::-webkit-outer-spin-button,
+  .dev-nav-step::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .dev-nav-step:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.2);
   }
 </style>

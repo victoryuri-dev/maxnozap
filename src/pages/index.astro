@@ -1,22 +1,42 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { quizQuestions, TOTAL_STEPS } from '../data/quiz-questions';
+import { quizQuestions, type QuizQuestion } from '../data/quiz-questions';
 
-const CAPTURE_STEP = quizQuestions.length + 1;
-const LOADING_STEP = quizQuestions.length + 2;
-const DIAG_STEP = quizQuestions.length + 3;
-const SOLUTION_STEP = quizQuestions.length + 4;
+// Telas 1..N: intercala uma tela de transição (só texto) antes de qualquer pergunta
+// que tenha `transitionBefore`, e uma tela por pergunta — nessa ordem sequencial.
+type ScreenEntry = { type: 'transition'; text: string } | { type: 'question'; data: QuizQuestion };
+
+const screens: ScreenEntry[] = [];
+for (const q of quizQuestions) {
+  if (q.transitionBefore) screens.push({ type: 'transition', text: q.transitionBefore });
+  screens.push({ type: 'question', data: q });
+}
+
+const CAPTURE_STEP = screens.length + 1;
+const LOADING_STEP = screens.length + 2;
+const DIAG_STEP = screens.length + 3;
+const SOLUTION_INTRO_STEP = screens.length + 4;
+const SOLUTION_STEP = screens.length + 5;
+const TOTAL_STEPS = screens.length + 5;
 ---
 
 <Layout title="Quiz — Max no Zap">
-  <div class="phone no-footer" data-total={TOTAL_STEPS} data-diag-step={DIAG_STEP}>
+  <div
+    class="phone no-footer"
+    data-total={TOTAL_STEPS}
+    data-capture-step={CAPTURE_STEP}
+    data-loading-step={LOADING_STEP}
+    data-diag-step={DIAG_STEP}
+    data-solution-intro-step={SOLUTION_INTRO_STEP}
+    data-solution-step={SOLUTION_STEP}
+  >
     <div class="progress">
       <div class="bar" id="bar"></div>
     </div>
 
     <div class="screen-stack">
       <!-- TELA 0 -->
-      <div class="screen active" data-step="0">
+      <div class="screen hero-screen active" data-step="0">
         <div class="hero-wrap">
           <img class="hero-swoosh" src="/img/m-swoosh.png" alt="" />
           <img class="hero-img" src="/img/max fala.png" alt="Max acenando" />
@@ -24,27 +44,41 @@ const SOLUTION_STEP = quizQuestions.length + 4;
 
         <div class="s0-sheet">
           <div class="content-col">
-            <h2 class="hero-title">Fala, chefe!</h2>
-            <p class="sub">Bora descobrir quanto tempo (e dinheiro) o orçamento no papel tá te custando?</p>
-            <p class="sub">São só <span class="hl">7 perguntinhas rápidas</span></p>
-            <p class="sub">No final eu mostro o seu diagnóstico.</p>
-            <button class="btn" data-action="push-up">bora!</button>
+            <h2 class="hero-title">Fala, chefe! 👋</h2>
+            <p class="sub">Quanto você perdeu mês passado por demorar pra mandar orçamento?</p>
+            <p class="sub">Não sabe? Então bora descobrir — leva 1 minuto.</p>
+            <button class="btn" data-action="push-up">BORA!</button>
+            <p class="micro">Leva menos de 1 minuto</p>
           </div>
         </div>
       </div>
 
-      <!-- PERGUNTAS (geradas a partir de src/data/quiz-questions.ts) -->
+      <!-- PERGUNTAS E TRANSIÇÕES (geradas a partir de src/data/quiz-questions.ts) -->
       {
-        quizQuestions.map((q, i) => {
+        screens.map((s, i) => {
           const step = i + 1;
           const next = i + 2;
+
+          if (s.type === 'transition') {
+            return (
+              <div class="screen transition-screen" data-step={step}>
+                <div class="content-col">
+                  <p class="transition-text">{s.text}</p>
+                  <p class="micro">toque pra continuar</p>
+                </div>
+                <button class="screen-tap" data-action="advance" data-next={next} aria-label="Continuar" />
+              </div>
+            );
+          }
+
+          const q = s.data;
           return (
-            <div class="screen" data-step={step}>
+            <div class="screen" data-step={step} data-question-id={q.id}>
               <div class="content-col">
                 <div class="step-tag">{q.tag}</div>
                 <h2>{q.question}</h2>
                 {q.options.map((opt) => (
-                  <button class="opt" data-action="pick" data-next={next} data-value={opt.value ?? opt.label} data-track={q.track ?? ''}>
+                  <button class="opt" data-action="pick" data-next={next} data-value={opt.value} data-label={opt.label}>
                     {opt.emoji && <span class="em">{opt.emoji}</span>} {opt.label}
                   </button>
                 ))}
@@ -72,8 +106,8 @@ const SOLUTION_STEP = quizQuestions.length + 4;
       </div>
 
       <!-- LOADING -->
-      <div class="screen" data-step={LOADING_STEP}>
-        <div class="content-col">
+      <div class="screen bg-azul" data-step={LOADING_STEP}>
+        <div class="content-col loading-content">
           <div class="loader-wrap">
             <div class="spinner"></div>
             <div class="load-txt" id="loadTxt">Analisando tuas respostas...</div>
@@ -82,72 +116,119 @@ const SOLUTION_STEP = quizQuestions.length + 4;
       </div>
 
       <!-- DIAGNÓSTICO -->
-      <div class="screen" data-step={DIAG_STEP}>
-        <div class="content-col">
-          <div class="diag-head">
-            <div class="t">🔧 DIAGNÓSTICO DO <span id="diagNome">CHEFE</span></div>
-            <div class="s">Feito com base nas tuas respostas</div>
+      <div class="screen bg-azul" data-step={DIAG_STEP}>
+        <div class="content-col diag-content">
+          <div class="diag-hero">
+            <div class="diag-hero-eyebrow">🔧 Diagnóstico do <span id="diagNome">CHEFE</span></div>
+            <p class="diag-hero-lead">Você está tendo um <strong>prejuízo</strong> estimado de</p>
+            <div class="diag-hero-value"><span id="diagPrejuizo">R$ 1.000 a R$ 3.000</span> por mês!!</div>
           </div>
-          <div class="diag-card">
-            <h3>⏱️ Tempo</h3>
-            <p>
-              Se você gasta <strong id="diagTempo">~30 min</strong> por orçamento, isso dá fácil
-              <strong>várias horas por semana</strong> só fazendo orçamento. No mês, é praticamente
-              <strong>uma semana inteira de trabalho</strong> que não entra no caixa.
-            </p>
+
+          <div class="diag-row">
+            <span class="diag-row-icon">⏱️</span>
+            <div class="diag-row-body">
+              <div class="diag-row-title" id="diagHoras">~7 horas por semana</div>
+              <div class="diag-row-sub">só fazendo orçamento na mão</div>
+            </div>
           </div>
-          <div class="diag-card">
-            <h3>💸 Dinheiro</h3>
-            <p>
-              Cada pechinchada de 10% num serviço de R$ 800 = <strong>R$ 80 que ficam na mesa</strong>. Somando os
-              clientes que somem sem resposta, dá pra estar deixando <strong id="diagFaixa">R$ 1.000 a R$ 3.000</strong>
-              por mês sem nem perceber.
-            </p>
+
+          <div class="diag-row">
+            <span class="diag-row-icon">😤</span>
+            <div class="diag-row-body">
+              <div class="diag-row-title">Cliente foge da demora</div>
+              <div class="diag-row-sub" id="diagP4">perde cliente direto por demora</div>
+            </div>
           </div>
-          <div class="diag-card">
-            <h3>🎯 Resumo</h3>
-            <p>
-              Teu problema não é mão de obra, chefe. É <strong>velocidade e apresentação</strong>. O concorrente não é
-              melhor que você — ele só responde mais rápido e parece mais profissional.
-            </p>
+
+          <div class="diag-row">
+            <span class="diag-row-icon">💸</span>
+            <div class="diag-row-body">
+              <div class="diag-row-title">O papel convida desconto</div>
+              <div class="diag-row-sub" id="diagP5">pede desconto sempre</div>
+            </div>
           </div>
-          <button class="btn" data-action="go" data-goto={SOLUTION_STEP}>E AGORA, CHEFE? 👇</button>
+
+          <p class="diag-veredito">O problema não é a mão de obra. <strong>É velocidade e apresentação!</strong> 🎯</p>
+
+          <p class="diag-cta-lead">E agora, chefe?</p>
+
+          <button class="btn btn-lime" data-action="go" data-goto={SOLUTION_INTRO_STEP}>VAMOS CORRIGIR ISSO!</button>
         </div>
       </div>
 
-      <!-- SOLUÇÃO -->
+      <!-- SOLUÇÃO — ABERTURA (mesmo tratamento visual da tela 0: herói + folha branca) -->
+      <div class="screen hero-screen" data-step={SOLUTION_INTRO_STEP}>
+        <div class="hero-wrap">
+          <img class="hero-swoosh" src="/img/m-swoosh.png" alt="" />
+          <img class="hero-img" src="/img/max fala.png" alt="Max acenando" />
+        </div>
+
+        <div class="s0-sheet">
+          <div class="content-col">
+            <h2 class="hero-title">Relaxa, chefe!<br />Eu resolvo isso pra você.</h2>
+            <p class="sub">Sou o <b>Max</b>, teu funcionário digital no WhatsApp.</p>
+            <p class="sub">Funciona assim:</p>
+            <div class="step-pill" id="stepPill">
+              <span class="step-pill-icon">🎙️</span>
+              <span class="step-pill-text">Você manda o áudio do serviço</span>
+            </div>
+            <p class="micro">Toque para continuar</p>
+          </div>
+        </div>
+
+        <button class="screen-tap" data-action="cycle-step" data-next={SOLUTION_STEP} aria-label="Continuar" />
+      </div>
+
+      <!-- SOLUÇÃO — OFERTA E CTA -->
       <div class="screen" data-step={SOLUTION_STEP}>
         <div class="content-col">
-          <div class="ba-img">
-            <img src="/img/antes-depois.png" alt="Antes: orçamento no papel · Depois: orçamento PDF profissional" />
+          <div class="audio-head">
+            <h2>É só entrar no link abaixo e <strong>mandar um áudio</strong>!</h2>
+            <img class="whats-sticker" src="/img/sticker.png" alt="Funciona dentro do WhatsApp" />
           </div>
-          <h2>Relaxa, chefe. Isso tem conserto — e eu resolvo. 🫡</h2>
-          <p class="sub">Sou o <b>Max</b>, teu funcionário digital no WhatsApp.</p>
-          <div class="steps-mini">
-            <div><span class="em">🎙️</span> Você manda o áudio do serviço</div>
-            <div><span class="em">⚡</span> Eu entendo e monto na hora</div>
-            <div><span class="em">📄</span> Sai o PDF profissional com a logo da tua oficina em 30s</div>
-          </div>
-          <div class="offer">
-            <div class="gift">🎁</div>
-            <div class="big">TEUS 3 PRIMEIROS ORÇAMENTOS SÃO GRÁTIS</div>
-            <div class="small">Sem cartão, sem compromisso. Testa na prática e vê com teus olhos.</div>
-          </div>
+
+          <p class="audio-note">Sem <strong class="hl-red">app</strong> pra baixar</p>
+          <p class="audio-note">Nem <strong class="hl-red">cadastro</strong> chato</p>
+
           <a
-            class="btn"
+            class="audio-cta"
             href="https://wa.me/5537999274941?text=Fala,%20Max!%20Fiz%20o%20quiz%20e%20vi%20meu%20diagn%C3%B3stico.%20Quero%20meus%203%20or%C3%A7amentos%20gr%C3%A1tis!"
             target="_blank"
             rel="noopener"
           >
-            👉 MANDAR MEU PRIMEIRO ÁUDIO
+            TOQUE AQUI PARA COMEÇAR!
           </a>
-          <span class="link-human">Prefiro falar com uma pessoa</span>
+
+          <img class="gift-img" src="/img/gift.png" alt="Presente" />
         </div>
       </div>
     </div>
 
     <div class="phone-footer">@maxnozape</div>
   </div>
+
+  {
+    import.meta.env.DEV && (
+      <div class="dev-nav">
+        <button type="button" class="dev-nav-btn" data-action="dev-prev" aria-label="Etapa anterior">
+          ‹
+        </button>
+        <input
+          class="dev-nav-step"
+          id="devStep"
+          type="number"
+          inputmode="numeric"
+          min="0"
+          max={TOTAL_STEPS}
+          value="0"
+          aria-label="Ir direto pra etapa"
+        />
+        <button type="button" class="dev-nav-btn" data-action="dev-next" aria-label="Próxima etapa">
+          ›
+        </button>
+      </div>
+    )
+  }
 
   <script src="../scripts/quiz.ts"></script>
 </Layout>

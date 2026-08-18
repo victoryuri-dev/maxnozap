@@ -1,94 +1,101 @@
 export interface QuizOption {
   emoji?: string;
   label: string;
-  /** Valor usado no diagnóstico final quando a pergunta tem `track`. Se omitido, usa `label`. */
-  value?: string;
+  /** Slug estável — usado pra gravar a resposta e alimentar as tabelas de diagnóstico em diagnostico.ts */
+  value: string;
 }
 
 export interface QuizQuestion {
+  /** p1..p7 — chave da resposta no objeto de respostas e no leads.respostas do Supabase */
+  id: string;
   tag: string;
   question: string;
   options: QuizOption[];
-  /** Quando definido, a opção escolhida alimenta o diagnóstico final sob essa chave. */
-  track?: 'tempo' | 'faixa';
+  /** Texto de uma tela de transição própria, exibida antes desta pergunta (opcional) */
+  transitionBefore?: string;
 }
 
 // Ordem = ordem de exibição. Pra adicionar/remover/reordenar perguntas, mexe só aqui —
 // o front (telas, barra de progresso, animações) se ajusta sozinho.
 export const quizQuestions: QuizQuestion[] = [
   {
+    id: 'p1',
     tag: 'Pergunta 1 de 7',
-    question: 'Primeiro me conta: qual é a tua praia?',
+    question: 'Primeiro me conta: qual é a tua área?',
     options: [
-      { emoji: '🔨', label: 'Funilaria e pintura' },
-      { emoji: '✨', label: 'Estética automotiva / detalhamento' },
-      { emoji: '🔧', label: 'Mecânica / borracharia' },
-      { emoji: '😅', label: 'Faço de tudo um pouco' },
+      { emoji: '🔨', label: 'Funilaria e pintura', value: 'funilaria' },
+      { emoji: '✨', label: 'Estética automotiva / detalhamento', value: 'estetica' },
+      { emoji: '🔧', label: 'Mecânica / Elétrica', value: 'mecanica' },
+      { emoji: '😅', label: 'Faço de tudo um pouco', value: 'geral' },
     ],
   },
   {
+    id: 'p2',
     tag: 'Pergunta 2 de 7',
     question: 'E hoje, como você monta teus orçamentos?',
     options: [
-      { emoji: '📄', label: 'Papel e caneta (o clássico)' },
-      { emoji: '📱', label: 'No WhatsApp, na mão mesmo' },
-      { emoji: '💻', label: 'Uso um sistema/app' },
-      { emoji: '🤷', label: 'Depende do dia' },
+      { emoji: '📄', label: 'Papel e caneta (o clássico)', value: 'papel' },
+      { emoji: '📱', label: 'No WhatsApp, na mão mesmo', value: 'whatsapp' },
+      { emoji: '💻', label: 'Uso um sistema/app', value: 'sistema' },
+      { emoji: '🤷', label: 'Depende do dia', value: 'depende' },
     ],
   },
   {
-    tag: 'Pergunta 3 de 7 · sinceridade, chefe 👇',
+    id: 'p3',
+    tag: 'Pergunta 3 de 7',
     question: 'Quanto tempo você gasta pra montar UM orçamento?',
-    track: 'tempo',
+    transitionBefore: 'Saquei... agora me responde com sinceridade, chefe 👇',
     options: [
-      { label: 'Menos de 10 min', value: 'menos de 10 min' },
-      { label: '10 a 30 min', value: '10 a 30 min' },
-      { label: '30 min a 1 hora', value: '30 min a 1 hora' },
-      { label: 'Mais de 1 hora 😩', value: 'mais de 1 hora' },
+      { label: 'Menos de 10 min', value: 'menos10' },
+      { label: '10 a 30 min', value: 'de10a30' },
+      { label: '30 min a 1 hora', value: 'de30a60' },
+      { label: 'Mais de 1 hora 😩', value: 'mais1h' },
     ],
   },
   {
+    id: 'p4',
     tag: 'Pergunta 4 de 7',
     question: 'Já perdeu cliente porque demorou pra mandar o orçamento?',
     options: [
-      { emoji: '😡', label: 'Direto' },
-      { label: 'Já aconteceu umas vezes' },
-      { label: 'Quase nunca' },
-      { label: 'Nunca (aí é sorte, viu)' },
+      { label: 'Direto 😡', value: 'direto' },
+      { label: 'Já aconteceu umas vezes', value: 'algumas' },
+      { label: 'Quase nunca', value: 'quasenunca' },
+      { label: 'Nunca (aí é sorte, viu)', value: 'nunca' },
     ],
   },
   {
+    id: 'p5',
     tag: 'Pergunta 5 de 7',
     question: 'E quando o cliente vê teu preço, ele...',
     options: [
-      { label: 'Pechincha sempre' },
-      { label: 'Negocia de vez em quando' },
-      { label: 'Aceita de boa' },
-      { label: 'Some e não responde 👻' },
+      { label: 'Pede desconto sempre', value: 'sempre' },
+      { label: 'Negocia de vez em quando', value: 'vezenquando' },
+      { label: 'Aceita de boa', value: 'aceita' },
+      { label: 'Some e não responde 👻', value: 'some' },
     ],
   },
   {
-    tag: 'Pergunta 6 de 7 · agora o contrário...',
+    id: 'p6',
+    tag: 'Pergunta 6 de 7',
     question: 'Se todo orçamento saísse em 30 segundos, o que você faria com o tempo que sobra?',
+    transitionBefore: 'Entendi. Agora deixa eu te perguntar o contrário...',
     options: [
-      { emoji: '🚗', label: 'Atender mais carro e faturar mais' },
-      { emoji: '🍽️', label: 'Jantar em paz com a família' },
-      { emoji: '😴', label: 'Ter domingo de volta' },
-      { emoji: '💪', label: 'Cobrar melhor sem dor de cabeça' },
+      { emoji: '🚗', label: 'Atenderia mais carro e faturaria mais', value: 'mais_carro' },
+      { emoji: '🍽️', label: 'Jantaria em paz com a família', value: 'familia' },
+      { emoji: '😴', label: 'Teria o domingo de volta', value: 'domingo' },
+      { emoji: '💪', label: 'Cobraria melhor sem dor de cabeça', value: 'cobrar' },
     ],
   },
   {
+    id: 'p7',
     tag: 'Pergunta 7 de 7',
-    question: 'E se o cliente parasse de pechinchar... quanto a mais você fecharia por mês?',
-    track: 'faixa',
+    question:
+      'E se o cliente parasse de pedir desconto porque teu orçamento parece profissional... quanto a mais você fecharia por mês?',
     options: [
-      { label: 'R$ 500 a R$ 1.000', value: 'R$ 500 a R$ 1.000' },
-      { label: 'R$ 1.000 a R$ 3.000', value: 'R$ 1.000 a R$ 3.000' },
-      { label: 'R$ 3.000 a R$ 5.000', value: 'R$ 3.000 a R$ 5.000' },
-      { label: 'Mais de R$ 5.000 🚀', value: 'mais de R$ 5.000' },
+      { label: 'R$ 500 a R$ 1.000', value: 'faixa1' },
+      { label: 'R$ 1.000 a R$ 3.000', value: 'faixa2' },
+      { label: 'R$ 3.000 a R$ 5.000', value: 'faixa3' },
+      { label: 'Mais de R$ 5.000 🚀', value: 'faixa4' },
     ],
   },
 ];
-
-// steps das perguntas (1..N) + captura + loading + diagnóstico + solução
-export const TOTAL_STEPS = quizQuestions.length + 4;
