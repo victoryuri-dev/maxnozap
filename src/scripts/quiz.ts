@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
 import { HORAS_POR_P3, FRASE_P4, FRASE_P5 } from '../data/diagnostico';
 
 // envolve o conteúdo de cada .opt/.btn num .face — o "rosto" que se
@@ -38,6 +38,86 @@ new URLSearchParams(window.location.search).forEach((value, key) => {
   if (key.startsWith('utm_')) utm[key] = value;
 });
 
+// ---------- rastreio de funil (completou? onde parou? quanto tempo no total?) ----------
+// um id por visita, e uma linha só em funnel_sessions (ver supabase/schema.sql) que vai
+// sendo atualizada via RPC a cada passo real — nunca insere linha nova por passo
+const sessionId = crypto.randomUUID();
+const sessionStartedAt = Date.now();
+let currentTrackedStep = 0;
+// true durante um pulo do nav de dev — esses pulos não são navegação real do usuário,
+// então não devem virar dado de analytics
+let devNavigating = false;
+
+function labelForStep(step: number): string {
+  return document.querySelector<HTMLElement>(`.screen[data-step="${step}"]`)?.dataset.trackLabel ?? String(step);
+}
+
+interface PendingAnswer {
+  questionId: string;
+  value: string;
+  label: string;
+}
+
+// resposta que acabou de ser escolhida (p2 em diante), esperando a próxima troca de tela
+// pra ir junto na mesma chamada — assim a resposta já fica salva no clique, sem precisar
+// esperar o formulário final ser preenchido
+let pendingAnswer: PendingAnswer | null = null;
+
+// chamado toda vez que uma navegação REAL (não dev) troca de tela — atualiza a linha
+// da sessão com a etapa mais recente, o tempo total até aqui, e a resposta pendente
+function trackStepChange(next: number) {
+  if (next === currentTrackedStep) return;
+  currentTrackedStep = next;
+  const answer = pendingAnswer;
+  pendingAnswer = null;
+  void upsertFunnelProgress(next, answer);
+}
+
+async function upsertFunnelProgress(step: number, answer: PendingAnswer | null) {
+  if (!supabase) return;
+  const label = labelForStep(step);
+  const { error } = await supabase.rpc('upsert_funnel_progress', {
+    p_session_id: sessionId,
+    p_step: step,
+    p_label: label,
+    p_duration_ms: Date.now() - sessionStartedAt,
+    p_completed: label === 'solucao_final',
+    p_utm: utm,
+    p_question_id: answer?.questionId ?? null,
+    p_answer_label: answer?.label ?? null,
+  });
+  if (error) console.error('Erro ao registrar progresso do funil:', error.message);
+}
+
+// se a pessoa fechar/sair da página no meio do funil, registra o tempo total até ali
+// mesmo sem uma troca de tela seguinte — sem isso, quem fica parado numa tela e
+// desiste não teria o tempo daquela última tela contabilizado.
+// usa fetch com keepalive (em vez do client do supabase) porque é a forma confiável
+// de garantir que a requisição saia mesmo com a página sendo fechada
+let abandonFlushed = false;
+function flushAbandonEvent() {
+  if (abandonFlushed || !supabaseUrl || !supabaseAnonKey) return;
+  abandonFlushed = true;
+  const label = labelForStep(currentTrackedStep);
+  const body = JSON.stringify({
+    p_session_id: sessionId,
+    p_step: currentTrackedStep,
+    p_label: label,
+    p_duration_ms: Date.now() - sessionStartedAt,
+    p_completed: label === 'solucao_final',
+    p_utm: utm,
+    p_question_id: pendingAnswer?.questionId ?? null,
+    p_answer_label: pendingAnswer?.label ?? null,
+  });
+  fetch(`${supabaseUrl}/rest/v1/rpc/upsert_funnel_progress`, {
+    method: 'POST',
+    keepalive: true,
+    headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
+    body,
+  }).catch(() => {});
+}
+window.addEventListener('pagehide', flushAbandonEvent);
+
 const devStepEl = document.getElementById('devStep') as HTMLInputElement | null;
 
 function showStep(n: number) {
@@ -46,6 +126,7 @@ function showStep(n: number) {
   phone.classList.toggle('no-footer', n === 0);
   phone.scrollTop = 0;
   if (devStepEl) devStepEl.value = String(n);
+  if (!devNavigating) trackStepChange(n);
 }
 function go(n: number) {
   showStep(n);
@@ -91,6 +172,7 @@ function pushUpTransition(fromStep: number, toStep: number, onSettled?: () => vo
   bar.style.width = (toStep / TOTAL) * 100 + '%';
   phone.classList.remove('no-footer');
   if (devStepEl) devStepEl.value = String(toStep);
+  if (!devNavigating) trackStepChange(toStep);
 
   newS.style.transition = 'none';
   newS.style.transform = 'translateY(100%)';
@@ -241,6 +323,11 @@ function pick(el: HTMLElement) {
   if (questionId) {
     const pergunta = screen.querySelector('h2')?.textContent ?? '';
     answers[questionId] = { pergunta, resposta: label, valor: value };
+    // a partir da p2 — assim a resposta já fica registrada no próximo evento de funil,
+    // mesmo que a pessoa nunca preencha nome/WhatsApp no final
+    if (questionId !== 'p1') {
+      pendingAnswer = { questionId, value, label };
+    }
   }
 
   staggerOut(curCol, () => {
@@ -261,7 +348,9 @@ async function saveLead(nome: string, whatsapp: string) {
     console.warn('Supabase não configurado: defina PUBLIC_SUPABASE_URL e PUBLIC_SUPABASE_ANON_KEY em .env');
     return;
   }
-  const { error } = await supabase.from('MAX | QUIZ LEADS').insert({ nome, whatsapp, respostas: answers, utm });
+  const { error } = await supabase
+    .from('MAX | QUIZ LEADS')
+    .insert({ nome, whatsapp, respostas: answers, utm, session_id: sessionId });
   if (error) console.error('Erro ao salvar lead no Supabase:', error.message);
 }
 
@@ -318,6 +407,10 @@ let devBusy = false;
 // de "current" até "target" — usado tanto pelo ‹ › quanto pelo campo numérico
 function devAnimateTo(current: number, target: number) {
   if (devBusy || target === current) return;
+  devNavigating = true;
+  setTimeout(() => {
+    devNavigating = false;
+  }, 700);
 
   if (autoAdvanceTimer) {
     clearTimeout(autoAdvanceTimer);

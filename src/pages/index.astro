@@ -36,7 +36,7 @@ const TOTAL_STEPS = screens.length + 5;
 
     <div class="screen-stack">
       <!-- TELA 0 -->
-      <div class="screen hero-screen active" data-step="0">
+      <div class="screen hero-screen active" data-step="0" data-track-label="hero">
         <div class="hero-wrap">
           <img class="hero-swoosh" src="/img/m-swoosh.png" alt="" />
           <img class="hero-img" src="/img/max fala.png" alt="Max acenando" />
@@ -61,7 +61,7 @@ const TOTAL_STEPS = screens.length + 5;
 
           if (s.type === 'transition') {
             return (
-              <div class="screen transition-screen" data-step={step}>
+              <div class="screen transition-screen" data-step={step} data-track-label="transicao">
                 <div class="content-col">
                   <p class="transition-text">{s.text}</p>
                   <p class="micro">toque pra continuar</p>
@@ -73,7 +73,7 @@ const TOTAL_STEPS = screens.length + 5;
 
           const q = s.data;
           return (
-            <div class="screen" data-step={step} data-question-id={q.id}>
+            <div class="screen" data-step={step} data-question-id={q.id} data-track-label={q.id}>
               <div class="content-col">
                 <div class="step-tag">{q.tag}</div>
                 <h2>{q.question}</h2>
@@ -89,7 +89,7 @@ const TOTAL_STEPS = screens.length + 5;
       }
 
       <!-- CAPTURA -->
-      <div class="screen" data-step={CAPTURE_STEP}>
+      <div class="screen" data-step={CAPTURE_STEP} data-track-label="captura">
         <div class="content-col">
           <div class="brand"><img class="brand-logo" src="/img/assinatura digital.png" alt="" /> MAX NO ZAP</div>
           <h2>Pronto, chefe! Montei teu diagnóstico 🔧</h2>
@@ -106,7 +106,7 @@ const TOTAL_STEPS = screens.length + 5;
       </div>
 
       <!-- LOADING -->
-      <div class="screen bg-azul" data-step={LOADING_STEP}>
+      <div class="screen bg-azul" data-step={LOADING_STEP} data-track-label="loading">
         <div class="content-col loading-content">
           <div class="loader-wrap">
             <div class="spinner"></div>
@@ -116,7 +116,7 @@ const TOTAL_STEPS = screens.length + 5;
       </div>
 
       <!-- DIAGNÓSTICO -->
-      <div class="screen bg-azul" data-step={DIAG_STEP}>
+      <div class="screen bg-azul" data-step={DIAG_STEP} data-track-label="diagnostico">
         <div class="content-col diag-content">
           <div class="diag-hero">
             <div class="diag-hero-eyebrow">🔧 Diagnóstico do <span id="diagNome">CHEFE</span></div>
@@ -157,7 +157,7 @@ const TOTAL_STEPS = screens.length + 5;
       </div>
 
       <!-- SOLUÇÃO — ABERTURA (mesmo tratamento visual da tela 0: herói + folha branca) -->
-      <div class="screen hero-screen" data-step={SOLUTION_INTRO_STEP}>
+      <div class="screen hero-screen" data-step={SOLUTION_INTRO_STEP} data-track-label="solucao_intro">
         <div class="hero-wrap">
           <img class="hero-swoosh" src="/img/m-swoosh.png" alt="" />
           <img class="hero-img" src="/img/max fala.png" alt="Max acenando" />
@@ -180,7 +180,7 @@ const TOTAL_STEPS = screens.length + 5;
       </div>
 
       <!-- SOLUÇÃO — OFERTA E CTA -->
-      <div class="screen" data-step={SOLUTION_STEP}>
+      <div class="screen" data-step={SOLUTION_STEP} data-track-label="solucao_final">
         <div class="content-col">
           <div class="audio-head">
             <h2>É só entrar no link abaixo e <strong>mandar um áudio</strong>!</h2>
