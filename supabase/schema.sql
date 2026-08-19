@@ -23,9 +23,19 @@ alter table public."MAX | QUIZ LEADS" add column if not exists utm_source text g
 alter table public."MAX | QUIZ LEADS" add column if not exists utm_medium text generated always as (utm ->> 'utm_medium') stored;
 alter table public."MAX | QUIZ LEADS" add column if not exists utm_campaign text generated always as (utm ->> 'utm_campaign') stored;
 alter table public."MAX | QUIZ LEADS" add column if not exists utm_content text generated always as (utm ->> 'utm_content') stored;
--- liga esse lead à sessão de navegação dele em funnel_events (ver mais abaixo) —
+-- liga esse lead à sessão de navegação dele em funnel_sessions (ver mais abaixo) —
 -- é como você cruza "quem converteu" com "o caminho que ele percorreu até converter".
 alter table public."MAX | QUIZ LEADS" add column if not exists session_id uuid;
+
+-- mesma resposta que já tá dentro do JSON `respostas` acima, só que uma coluna por
+-- pergunta — igual à funnel_sessions, pra abrir direto numa planilha sem parsear JSON.
+alter table public."MAX | QUIZ LEADS" add column if not exists p1 text;
+alter table public."MAX | QUIZ LEADS" add column if not exists p2 text;
+alter table public."MAX | QUIZ LEADS" add column if not exists p3 text;
+alter table public."MAX | QUIZ LEADS" add column if not exists p4 text;
+alter table public."MAX | QUIZ LEADS" add column if not exists p5 text;
+alter table public."MAX | QUIZ LEADS" add column if not exists p6 text;
+alter table public."MAX | QUIZ LEADS" add column if not exists p7 text;
 
 alter table public."MAX | QUIZ LEADS" enable row level security;
 

@@ -348,9 +348,21 @@ async function saveLead(nome: string, whatsapp: string) {
     console.warn('Supabase não configurado: defina PUBLIC_SUPABASE_URL e PUBLIC_SUPABASE_ANON_KEY em .env');
     return;
   }
-  const { error } = await supabase
-    .from('MAX | QUIZ LEADS')
-    .insert({ nome, whatsapp, respostas: answers, utm, session_id: sessionId });
+  const { error } = await supabase.from('MAX | QUIZ LEADS').insert({
+    nome,
+    whatsapp,
+    respostas: answers,
+    utm,
+    session_id: sessionId,
+    // mesma resposta guardada em coluna, uma por pergunta — igual a funnel_sessions
+    p1: answers.p1?.resposta ?? null,
+    p2: answers.p2?.resposta ?? null,
+    p3: answers.p3?.resposta ?? null,
+    p4: answers.p4?.resposta ?? null,
+    p5: answers.p5?.resposta ?? null,
+    p6: answers.p6?.resposta ?? null,
+    p7: answers.p7?.resposta ?? null,
+  });
   if (error) console.error('Erro ao salvar lead no Supabase:', error.message);
 }
 
