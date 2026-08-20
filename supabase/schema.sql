@@ -9,8 +9,11 @@ create table if not exists public."MAX | QUIZ LEADS" (
   nome text,
   whatsapp text,
 
-  -- Origem do tráfego (parâmetros da URL)
-  origem_parametros jsonb not null default '{}'::jsonb,
+  -- Origem do tráfego
+  origem text,
+  campanha text,
+  meio text,
+  conteudo text,
 
   -- Rastreio do funil (cada visitante gera uma linha, mesmo sem preencher form)
   sessao_id uuid not null unique,
@@ -28,12 +31,6 @@ create table if not exists public."MAX | QUIZ LEADS" (
   resposta_p6 text,
   resposta_p7 text
 );
-
--- Colunas geradas pra filtrar fácil no painel (sem JSON)
-alter table public."MAX | QUIZ LEADS" add column if not exists origem text generated always as (origem_parametros ->> 'utm_source') stored;
-alter table public."MAX | QUIZ LEADS" add column if not exists campanha text generated always as (origem_parametros ->> 'utm_campaign') stored;
-alter table public."MAX | QUIZ LEADS" add column if not exists meio text generated always as (origem_parametros ->> 'utm_medium') stored;
-alter table public."MAX | QUIZ LEADS" add column if not exists conteudo text generated always as (origem_parametros ->> 'utm_content') stored;
 
 alter table public."MAX | QUIZ LEADS" enable row level security;
 
@@ -60,7 +57,10 @@ create or replace function public.registrar_progresso(
   p_nome_etapa text,
   p_duracao_ms int,
   p_concluido boolean,
-  p_origem_parametros jsonb,
+  p_origem text default null,
+  p_campanha text default null,
+  p_meio text default null,
+  p_conteudo text default null,
   p_pergunta_id text default null,
   p_resposta_label text default null,
   p_nome text default null,
@@ -72,12 +72,14 @@ set search_path = public
 as $$
 begin
   insert into public."MAX | QUIZ LEADS" (
-    sessao_id, etapa_maxima, nome_etapa, duracao_ms, concluido, origem_parametros,
+    sessao_id, etapa_maxima, nome_etapa, duracao_ms, concluido,
+    origem, campanha, meio, conteudo,
     resposta_p1, resposta_p2, resposta_p3, resposta_p4, resposta_p5, resposta_p6, resposta_p7,
     nome, whatsapp
   )
   values (
-    p_sessao_id, p_etapa, p_nome_etapa, p_duracao_ms, p_concluido, p_origem_parametros,
+    p_sessao_id, p_etapa, p_nome_etapa, p_duracao_ms, p_concluido,
+    p_origem, p_campanha, p_meio, p_conteudo,
     case when p_pergunta_id = 'p1' then p_resposta_label end,
     case when p_pergunta_id = 'p2' then p_resposta_label end,
     case when p_pergunta_id = 'p3' then p_resposta_label end,
@@ -96,7 +98,10 @@ begin
     end,
     duracao_ms = excluded.duracao_ms,
     concluido = "MAX | QUIZ LEADS".concluido or excluded.concluido,
-    origem_parametros = excluded.origem_parametros,
+    origem = coalesce(excluded.origem, "MAX | QUIZ LEADS".origem),
+    campanha = coalesce(excluded.campanha, "MAX | QUIZ LEADS".campanha),
+    meio = coalesce(excluded.meio, "MAX | QUIZ LEADS".meio),
+    conteudo = coalesce(excluded.conteudo, "MAX | QUIZ LEADS".conteudo),
     atualizado_em = now(),
     resposta_p1 = coalesce(excluded.resposta_p1, "MAX | QUIZ LEADS".resposta_p1),
     resposta_p2 = coalesce(excluded.resposta_p2, "MAX | QUIZ LEADS".resposta_p2),
@@ -110,4 +115,4 @@ begin
 end;
 $$;
 
-grant execute on function public.registrar_progresso(uuid, int, text, int, boolean, jsonb, text, text, text, text) to anon;
+grant execute on function public.registrar_progresso(uuid, int, text, int, boolean, text, text, text, text, text, text, text, text) to anon;

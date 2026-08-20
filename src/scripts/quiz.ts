@@ -82,7 +82,10 @@ async function registrarProgresso(step: number, answer: PendingAnswer | null, op
     p_nome_etapa: label,
     p_duracao_ms: Date.now() - sessionStartedAt,
     p_concluido: label === 'solucao_final',
-    p_origem_parametros: utm,
+    p_origem: utm['utm_source'] ?? null,
+    p_campanha: utm['utm_campaign'] ?? null,
+    p_meio: utm['utm_medium'] ?? null,
+    p_conteudo: utm['utm_content'] ?? null,
     p_pergunta_id: answer?.questionId ?? null,
     p_resposta_label: answer?.label ?? null,
     p_nome: opts?.nome ?? null,
@@ -102,16 +105,19 @@ function flushAbandonEvent() {
   abandonFlushed = true;
   const label = labelForStep(currentTrackedStep);
   const body = JSON.stringify({
-    p_session_id: sessionId,
-    p_step: currentTrackedStep,
-    p_label: label,
-    p_duration_ms: Date.now() - sessionStartedAt,
-    p_completed: label === 'solucao_final',
-    p_utm: utm,
-    p_question_id: pendingAnswer?.questionId ?? null,
-    p_answer_label: pendingAnswer?.label ?? null,
+    p_sessao_id: sessionId,
+    p_etapa: currentTrackedStep,
+    p_nome_etapa: label,
+    p_duracao_ms: Date.now() - sessionStartedAt,
+    p_concluido: label === 'solucao_final',
+    p_origem: utm['utm_source'] ?? null,
+    p_campanha: utm['utm_campaign'] ?? null,
+    p_meio: utm['utm_medium'] ?? null,
+    p_conteudo: utm['utm_content'] ?? null,
+    p_pergunta_id: pendingAnswer?.questionId ?? null,
+    p_resposta_label: pendingAnswer?.label ?? null,
   });
-  fetch(`${supabaseUrl}/rest/v1/rpc/upsert_funnel_progress`, {
+  fetch(`${supabaseUrl}/rest/v1/rpc/registrar_progresso`, {
     method: 'POST',
     keepalive: true,
     headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
