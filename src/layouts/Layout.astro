@@ -479,6 +479,34 @@ const { title = 'Quiz — Max Orça' } = Astro.props;
     text-decoration: none;
   }
 
+  /* chama atenção pro CTA principal: 2 pulinhos, pausa, 2 pulinhos de novo —
+   só o .face pula (a sombra do ::after fica parada), então o botão "descola"
+   da sombra a cada salto, igual ao efeito de hover só que automático */
+  @keyframes bounce-face {
+    0%,
+    32%,
+    100% {
+      transform: translate(0, 0);
+    }
+    8% {
+      transform: translate(0, -14px);
+    }
+    16% {
+      transform: translate(0, 0);
+    }
+    24% {
+      transform: translate(0, -9px);
+    }
+  }
+
+  .btn-bounce .face {
+    animation: bounce-face 2.6s ease-in-out 1.75s infinite;
+  }
+
+  .btn-bounce:hover .face {
+    animation-play-state: paused;
+  }
+
   .micro {
     text-align: center;
     font-size: 12px;
