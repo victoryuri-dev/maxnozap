@@ -17,8 +17,6 @@ create table if not exists public."MAX | QUIZ LEADS" (
 
   -- Rastreio do funil (cada visitante gera uma linha, mesmo sem preencher form)
   sessao_id uuid not null unique,
-  etapa_maxima int not null default 0,
-  nome_etapa text not null default 'inicio',
   concluido boolean not null default false,
   duracao_ms int not null default 0,
 
@@ -53,8 +51,6 @@ create index if not exists leads_concluido_idx on public."MAX | QUIZ LEADS" (con
 
 create or replace function public.registrar_progresso(
   p_sessao_id uuid,
-  p_etapa int,
-  p_nome_etapa text,
   p_duracao_ms int,
   p_concluido boolean,
   p_origem text default null,
@@ -72,13 +68,13 @@ set search_path = public
 as $$
 begin
   insert into public."MAX | QUIZ LEADS" (
-    sessao_id, etapa_maxima, nome_etapa, duracao_ms, concluido,
+    sessao_id, duracao_ms, concluido,
     origem, campanha, meio, conteudo,
     resposta_p1, resposta_p2, resposta_p3, resposta_p4, resposta_p5, resposta_p6, resposta_p7,
     nome, whatsapp
   )
   values (
-    p_sessao_id, p_etapa, p_nome_etapa, p_duracao_ms, p_concluido,
+    p_sessao_id, p_duracao_ms, p_concluido,
     p_origem, p_campanha, p_meio, p_conteudo,
     case when p_pergunta_id = 'p1' then p_resposta_label end,
     case when p_pergunta_id = 'p2' then p_resposta_label end,
@@ -91,11 +87,6 @@ begin
     p_whatsapp
   )
   on conflict (sessao_id) do update set
-    etapa_maxima = greatest("MAX | QUIZ LEADS".etapa_maxima, excluded.etapa_maxima),
-    nome_etapa = case
-      when excluded.etapa_maxima >= "MAX | QUIZ LEADS".etapa_maxima then excluded.nome_etapa
-      else "MAX | QUIZ LEADS".nome_etapa
-    end,
     duracao_ms = excluded.duracao_ms,
     concluido = "MAX | QUIZ LEADS".concluido or excluded.concluido,
     origem = coalesce(excluded.origem, "MAX | QUIZ LEADS".origem),
@@ -115,4 +106,4 @@ begin
 end;
 $$;
 
-grant execute on function public.registrar_progresso(uuid, int, text, int, boolean, text, text, text, text, text, text, text, text) to anon;
+grant execute on function public.registrar_progresso(uuid, int, boolean, text, text, text, text, text, text, text, text) to anon;

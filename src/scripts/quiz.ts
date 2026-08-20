@@ -78,8 +78,6 @@ async function registrarProgresso(step: number, answer: PendingAnswer | null, op
   const label = labelForStep(step);
   const { error } = await supabase.rpc('registrar_progresso', {
     p_sessao_id: sessionId,
-    p_etapa: step,
-    p_nome_etapa: label,
     p_duracao_ms: Date.now() - sessionStartedAt,
     p_concluido: opts?.concluido ?? label === 'solucao_final',
     p_origem: utm['utm_source'] ?? null,
@@ -106,8 +104,6 @@ function flushAbandonEvent() {
   const label = labelForStep(currentTrackedStep);
   const body = JSON.stringify({
     p_sessao_id: sessionId,
-    p_etapa: currentTrackedStep,
-    p_nome_etapa: label,
     p_duracao_ms: Date.now() - sessionStartedAt,
     p_concluido: label === 'solucao_final',
     p_origem: utm['utm_source'] ?? null,
