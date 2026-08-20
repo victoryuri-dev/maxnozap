@@ -73,7 +73,7 @@ function trackStepChange(next: number) {
   void registrarProgresso(next, answer);
 }
 
-async function registrarProgresso(step: number, answer: PendingAnswer | null, opts?: { nome?: string; whatsapp?: string }) {
+async function registrarProgresso(step: number, answer: PendingAnswer | null, opts?: { nome?: string; whatsapp?: string; concluido?: boolean }) {
   if (!supabase) return;
   const label = labelForStep(step);
   const { error } = await supabase.rpc('registrar_progresso', {
@@ -81,7 +81,7 @@ async function registrarProgresso(step: number, answer: PendingAnswer | null, op
     p_etapa: step,
     p_nome_etapa: label,
     p_duracao_ms: Date.now() - sessionStartedAt,
-    p_concluido: label === 'solucao_final',
+    p_concluido: opts?.concluido ?? label === 'solucao_final',
     p_origem: utm['utm_source'] ?? null,
     p_campanha: utm['utm_campaign'] ?? null,
     p_meio: utm['utm_medium'] ?? null,
@@ -470,6 +470,11 @@ function devGoTo(value: number) {
 }
 
 document.addEventListener('click', (e) => {
+  const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href*="wa.me"]');
+  if (link) {
+    void registrarProgresso(currentTrackedStep, null, { concluido: true });
+  }
+
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
   if (!target) return;
 
