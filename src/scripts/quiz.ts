@@ -73,7 +73,7 @@ function trackStepChange(next: number) {
   void upsertFunnelProgress(next, answer);
 }
 
-async function upsertFunnelProgress(step: number, answer: PendingAnswer | null) {
+async function upsertFunnelProgress(step: number, answer: PendingAnswer | null, opts?: { nome?: string; whatsapp?: string }) {
   if (!supabase) return;
   const label = labelForStep(step);
   const { error } = await supabase.rpc('upsert_funnel_progress', {
@@ -85,6 +85,8 @@ async function upsertFunnelProgress(step: number, answer: PendingAnswer | null) 
     p_utm: utm,
     p_question_id: answer?.questionId ?? null,
     p_answer_label: answer?.label ?? null,
+    p_nome: opts?.nome ?? null,
+    p_whatsapp: opts?.whatsapp ?? null,
   });
   if (error) console.error('Erro ao registrar progresso do funil:', error.message);
 }
@@ -342,28 +344,10 @@ function pick(el: HTMLElement) {
   });
 }
 
-// grava o lead no Supabase; nunca bloqueia o funil — se falhar, só loga o erro
+// grava o lead (nome + whatsapp) no Supabase; nunca bloqueia o funil — se falhar, só loga o erro
+// usa a mesma função RPC que registra o progresso do funil, só que com nome/whatsapp
 async function saveLead(nome: string, whatsapp: string) {
-  if (!supabase) {
-    console.warn('Supabase não configurado: defina PUBLIC_SUPABASE_URL e PUBLIC_SUPABASE_ANON_KEY em .env');
-    return;
-  }
-  const { error } = await supabase.from('MAX | QUIZ LEADS').insert({
-    nome,
-    whatsapp,
-    respostas: answers,
-    utm,
-    session_id: sessionId,
-    // mesma resposta guardada em coluna, uma por pergunta — igual a funnel_sessions
-    p1: answers.p1?.resposta ?? null,
-    p2: answers.p2?.resposta ?? null,
-    p3: answers.p3?.resposta ?? null,
-    p4: answers.p4?.resposta ?? null,
-    p5: answers.p5?.resposta ?? null,
-    p6: answers.p6?.resposta ?? null,
-    p7: answers.p7?.resposta ?? null,
-  });
-  if (error) console.error('Erro ao salvar lead no Supabase:', error.message);
+  void upsertFunnelProgress(currentTrackedStep, null, { nome, whatsapp });
 }
 
 function capturar() {
