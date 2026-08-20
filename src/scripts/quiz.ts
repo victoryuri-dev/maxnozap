@@ -16,7 +16,6 @@ const TOTAL = Number(phone.dataset.total);
 const CAPTURE_STEP = Number(phone.dataset.captureStep);
 const LOADING_STEP = Number(phone.dataset.loadingStep);
 const DIAG_STEP = Number(phone.dataset.diagStep);
-const SOLUTION_INTRO_STEP = Number(phone.dataset.solutionIntroStep);
 const SOLUTION_STEP = Number(phone.dataset.solutionStep);
 
 const EASE = 'cubic-bezier(.32,0,.24,1)';
@@ -269,52 +268,6 @@ function advanceTransition(el: HTMLElement) {
   });
 }
 
-// passos mostrados um de cada vez no "step-pill" da abertura da solução
-const solutionSteps = [
-  { icon: '🎙️', text: 'Você manda o áudio do serviço' },
-  { icon: '⚡', text: 'Eu entendo e monto na hora' },
-  { icon: '📄', text: 'Sai um orçamento PDF profissional com a logo da tua oficina em 30 segundos' },
-];
-let solutionStepIndex = 0;
-let cyclingStep = false;
-
-// toque na tela: troca o conteúdo do step-pill pro próximo passo (sai pela esquerda,
-// entra pela direita — mesma animação do stagger das perguntas). No último passo, avança de tela.
-function cycleStep(el: HTMLElement) {
-  if (cyclingStep) return;
-
-  if (solutionStepIndex >= solutionSteps.length - 1) {
-    const next = Number(el.dataset.next);
-    const current = el.closest<HTMLElement>('.screen')!;
-    pushUpTransition(Number(current.dataset.step), next);
-    return;
-  }
-
-  const pill = document.getElementById('stepPill')!;
-
-  cyclingStep = true;
-  // o botão inteiro sai pela esquerda (não só o conteúdo dele)
-  pill.style.transition = 'transform .22s ease, opacity .22s ease';
-  pill.style.opacity = '0';
-  pill.style.transform = 'translateX(-28px)';
-
-  setTimeout(() => {
-    solutionStepIndex++;
-    const step = solutionSteps[solutionStepIndex];
-    pill.querySelector('.step-pill-icon')!.textContent = step.icon;
-    pill.querySelector('.step-pill-text')!.textContent = step.text;
-
-    // e o botão novo (já com o conteúdo trocado) entra inteiro pela direita
-    primeHidden([pill]);
-    void pill.offsetWidth;
-    revealStagger([pill], 0, 260);
-
-    setTimeout(() => {
-      cyclingStep = false;
-    }, 280);
-  }, 220);
-}
-
 function pick(el: HTMLElement) {
   el.classList.add('picked');
   const curCol = el.parentElement as HTMLElement;
@@ -392,7 +345,7 @@ const PUSH_PAIRS: [number, number][] = [
   [0, 1],
   [CAPTURE_STEP, LOADING_STEP],
   [LOADING_STEP, DIAG_STEP],
-  [SOLUTION_INTRO_STEP, SOLUTION_STEP],
+  [DIAG_STEP, SOLUTION_STEP],
 ];
 
 function isPushPair(a: number, b: number) {
@@ -484,15 +437,17 @@ document.addEventListener('click', (e) => {
     case 'advance':
       advanceTransition(target);
       break;
-    case 'cycle-step':
-      cycleStep(target);
-      break;
     case 'capturar':
       capturar();
       break;
     case 'go':
       go(Number(target.dataset.goto));
       break;
+    case 'push': {
+      const screen = target.closest<HTMLElement>('.screen')!;
+      pushUpTransition(Number(screen.dataset.step), Number(target.dataset.next));
+      break;
+    }
     case 'dev-prev':
       devJump(-1);
       break;

@@ -314,38 +314,11 @@ const { title = 'Quiz — Max Orça' } = Astro.props;
   .s0-sheet .content-col p:nth-of-type(2) {
     animation: 1.3s ease-in-out surgir;
   }
-  .s0-sheet .content-col .step-pill {
-    animation: 1.35s ease-in-out surgir;
-  }
   .s0-sheet .content-col p:nth-of-type(3) {
     animation: 1.4s ease-in-out surgir;
   }
   .s0-sheet .content-col .btn {
     animation: 1.5s ease-in-out surgir;
-  }
-
-  .step-pill {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--azul);
-    color: #fff;
-    border-radius: 999px;
-    padding: 16px 20px;
-    margin: 6px 0 2px;
-  }
-
-  .step-pill-icon {
-    flex: none;
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  .step-pill-text {
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 14.5px;
-    line-height: 1.35;
   }
 
   @media screen and (min-width: 420px) {
@@ -696,7 +669,15 @@ const { title = 'Quiz — Max Orça' } = Astro.props;
     animation: 1.75s ease-in-out surgir;
   }
 
-  /* solução — CTA final: manda pro WhatsApp */
+  /* solução — CTA final: manda pro WhatsApp. tela escura, contraste com o resto do quiz */
+  .screen.bg-preto {
+    background: var(--preto);
+  }
+
+  .screen.bg-preto h2 {
+    color: #fff;
+  }
+
   .audio-head {
     position: relative;
     margin-bottom: 26px;
@@ -719,7 +700,7 @@ const { title = 'Quiz — Max Orça' } = Astro.props;
     font-family: var(--display);
     font-weight: 800;
     font-size: 19px;
-    color: var(--preto);
+    color: #fff;
     line-height: 1.4;
   }
 
@@ -727,8 +708,8 @@ const { title = 'Quiz — Max Orça' } = Astro.props;
     margin-top: 130px;
   }
 
-  .hl-red {
-    color: var(--vermelho);
+  .hl-muted {
+    color: var(--cinza);
   }
 
   .audio-cta {
@@ -763,10 +744,8 @@ const { title = 'Quiz — Max Orça' } = Astro.props;
 
   .gift-img {
     display: block;
-    position: absolute;
-    width: 77vh;
-    left: -230px;
-    margin: 12px auto 0;
+    width: min(72%, 260px);
+    margin: 28px auto 0;
   }
 
   /* ferramenta de dev — só existe em `astro dev`, nunca no build publicado */

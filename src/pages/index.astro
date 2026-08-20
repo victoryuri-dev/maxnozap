@@ -15,9 +15,8 @@ for (const q of quizQuestions) {
 const CAPTURE_STEP = screens.length + 1;
 const LOADING_STEP = screens.length + 2;
 const DIAG_STEP = screens.length + 3;
-const SOLUTION_INTRO_STEP = screens.length + 4;
-const SOLUTION_STEP = screens.length + 5;
-const TOTAL_STEPS = screens.length + 5;
+const SOLUTION_STEP = screens.length + 4;
+const TOTAL_STEPS = screens.length + 4;
 ---
 
 <Layout title="Quiz — Max Orça">
@@ -27,7 +26,6 @@ const TOTAL_STEPS = screens.length + 5;
     data-capture-step={CAPTURE_STEP}
     data-loading-step={LOADING_STEP}
     data-diag-step={DIAG_STEP}
-    data-solution-intro-step={SOLUTION_INTRO_STEP}
     data-solution-step={SOLUTION_STEP}
   >
     <div class="progress">
@@ -152,43 +150,20 @@ const TOTAL_STEPS = screens.length + 5;
 
           <p class="diag-cta-lead">E agora, chefe?</p>
 
-          <button class="btn btn-lime" data-action="go" data-goto={SOLUTION_INTRO_STEP}>VAMOS CORRIGIR ISSO!</button>
+          <button class="btn btn-lime" data-action="push" data-next={SOLUTION_STEP}>VAMOS CORRIGIR ISSO!</button>
         </div>
-      </div>
-
-      <!-- SOLUÇÃO — ABERTURA (mesmo tratamento visual da tela 0: herói + folha branca) -->
-      <div class="screen hero-screen" data-step={SOLUTION_INTRO_STEP} data-track-label="solucao_intro">
-        <div class="hero-wrap">
-          <img class="hero-swoosh" src="/img/m-swoosh.png" alt="" />
-          <img class="hero-img" src="/img/max fala.png" alt="Max acenando" />
-        </div>
-
-        <div class="s0-sheet">
-          <div class="content-col">
-            <h2 class="hero-title">Relaxa, chefe!<br />Eu resolvo isso pra você.</h2>
-            <p class="sub">Sou o <b>Max</b>, teu funcionário digital no WhatsApp.</p>
-            <p class="sub">Funciona assim:</p>
-            <div class="step-pill" id="stepPill">
-              <span class="step-pill-icon">🎙️</span>
-              <span class="step-pill-text">Você manda o áudio do serviço</span>
-            </div>
-            <p class="micro">Toque para continuar</p>
-          </div>
-        </div>
-
-        <button class="screen-tap" data-action="cycle-step" data-next={SOLUTION_STEP} aria-label="Continuar" />
       </div>
 
       <!-- SOLUÇÃO — OFERTA E CTA -->
-      <div class="screen" data-step={SOLUTION_STEP} data-track-label="solucao_final">
+      <div class="screen bg-preto" data-step={SOLUTION_STEP} data-track-label="solucao_final">
         <div class="content-col">
           <div class="audio-head">
             <h2>É só entrar no link abaixo e <strong>mandar um áudio</strong>!</h2>
             <img class="whats-sticker" src="/img/sticker.png" alt="Funciona dentro do WhatsApp" />
           </div>
 
-          <p class="audio-note">Sem <strong class="hl-red">app</strong> pra baixar</p>
-          <p class="audio-note">Nem <strong class="hl-red">cadastro</strong> chato</p>
+          <p class="audio-note">Sem <strong class="hl-muted">app</strong> pra baixar</p>
+          <p class="audio-note">Nem <strong class="hl-muted">cadastro</strong> chato</p>
 
           <a
             class="audio-cta"
