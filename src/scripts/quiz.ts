@@ -57,18 +57,32 @@ interface PendingAnswer {
   label: string;
 }
 
-// resposta que acabou de ser escolhida (p2 em diante), esperando a próxima troca de tela
-// pra ir junto na mesma chamada — assim a resposta já fica salva no clique, sem precisar
-// esperar o formulário final ser preenchido
+// resposta que acabou de ser escolhida, esperando a próxima troca de tela pra ir junto
+// na mesma chamada — assim a resposta já fica salva no clique, sem precisar esperar o
+// formulário final ser preenchido
 let pendingAnswer: PendingAnswer | null = null;
+
+// só passa a gravar no Supabase depois que a pessoa responde a 2ª pergunta — quem
+// responde só a 1ª e some não deve gerar linha nenhuma
+let syncing = false;
 
 // chamado toda vez que uma navegação REAL (não dev) troca de tela — atualiza a linha
 // da sessão com a etapa mais recente, o tempo total até aqui, e a resposta pendente
-function trackStepChange(next: number) {
+async function trackStepChange(next: number) {
   if (next === currentTrackedStep) return;
   currentTrackedStep = next;
   const answer = pendingAnswer;
   pendingAnswer = null;
+
+  if (!syncing) {
+    if (Object.keys(answers).length < 2) return;
+    syncing = true;
+    // a linha ainda não existe — manda a resposta da p1 primeiro (que ficou esperando),
+    // pra ela já nascer com as duas respostas
+    const p1 = answers.p1;
+    if (p1) await registrarProgresso(next, { questionId: 'p1', value: p1.valor, label: p1.resposta });
+  }
+
   void registrarProgresso(next, answer);
 }
 
@@ -98,7 +112,7 @@ async function registrarProgresso(step: number, answer: PendingAnswer | null, op
 // de garantir que a requisição saia mesmo com a página sendo fechada
 let abandonFlushed = false;
 function flushAbandonEvent() {
-  if (abandonFlushed || !supabaseUrl || !supabaseAnonKey) return;
+  if (abandonFlushed || !syncing || !supabaseUrl || !supabaseAnonKey) return;
   abandonFlushed = true;
   const label = labelForStep(currentTrackedStep);
   const body = JSON.stringify({
@@ -280,11 +294,7 @@ function pick(el: HTMLElement) {
   if (questionId) {
     const pergunta = screen.querySelector('h2')?.textContent ?? '';
     answers[questionId] = { pergunta, resposta: label, valor: value };
-    // a partir da p2 — assim a resposta já fica registrada no próximo evento de funil,
-    // mesmo que a pessoa nunca preencha nome/WhatsApp no final
-    if (questionId !== 'p1') {
-      pendingAnswer = { questionId, value, label };
-    }
+    pendingAnswer = { questionId, value, label };
   }
 
   staggerOut(curCol, () => {
